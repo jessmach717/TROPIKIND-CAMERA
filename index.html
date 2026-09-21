@@ -103,7 +103,7 @@
   .field{margin-bottom:13px}
   .field:last-child{margin-bottom:0}
   label{display:block;font-size:11.5px;color:var(--muted);margin:0 0 6px 2px;font-weight:600;letter-spacing:.02em}
-  select,input[type="text"],input[type="number"],input[type="datetime-local"],textarea{
+  select,input[type="text"],input[type="number"],input[type="datetime-local"],input[type="url"],textarea{
     width:100%;font:inherit;color:var(--white);background:#081525;
     border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:12px;
   }
@@ -153,6 +153,15 @@
   .recrow{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;gap:10px}
   .recrow #recCount{font-weight:700;color:var(--white);font-size:15px}
   .recrow .rec-hint{font-size:11px;color:var(--muted)}
+  .sync-status{font-size:12px;padding:9px 11px;border-radius:10px;margin-bottom:11px;border:1px solid transparent;line-height:1.4}
+  .sync-status.off{color:var(--muted);background:#0a1626;border-color:rgba(255,255,255,.08)}
+  .sync-status.ok{color:#8ef0b0;background:rgba(51,194,107,.12);border-color:rgba(51,194,107,.32)}
+  .sync-status.wait{color:#ffd08a;background:rgba(255,154,77,.12);border-color:rgba(255,154,77,.32)}
+  .sync-status.err{color:#ffb0a4;background:rgba(255,90,72,.12);border-color:rgba(255,90,72,.34)}
+  .sync-cfg{margin-bottom:12px}
+  .sync-cfg label{margin:9px 0 5px 2px}
+  .sync-cfg input{margin-bottom:2px}
+  .sync-cfg .hint{font-size:10.5px;color:var(--muted);margin:5px 2px 0;line-height:1.45}
   button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
   .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
 </style>
@@ -254,10 +263,20 @@
   <div class="panel recpanel">
     <div class="recrow">
       <span id="recCount">0 records saved</span>
-      <span class="rec-hint">saved on this phone</span>
+      <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
+    </div>
+    <div class="sync-status off" id="syncStatus">Cloud sync off — add your Google Sheet link</div>
+    <div class="sync-cfg hidden" id="syncCfg">
+      <label>Google Sheet Web App URL</label>
+      <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">
+      <label>Secret token (must match the script)</label>
+      <input type="text" id="syncTokIn" autocomplete="off" placeholder="e.g. tropikind2026">
+      <p class="hint">Paste the Web App URL you get after deploying the Apps Script to your sheet. The token is optional but recommended.</p>
+      <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
     </div>
     <div class="row">
-      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export CSV (Excel)</button>
+      <button id="btnSyncNow" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Sync now</button>
+      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export CSV</button>
       <button id="btnClear" class="ghost danger">Clear</button>
     </div>
   </div>
@@ -671,7 +690,9 @@
   function logVisit(){
     var rec=currentRecord(), log=getLog();
     if(log.length && bizKey(log[log.length-1])===bizKey(rec)) return; // skip accidental double-tap
-    log.push(rec); setLog(log); updateRecCount();
+    rec.device=deviceId(); rec.synced=false; rec.syncedAt=null;
+    log.push(rec); setLog(log); updateRecCount(); updateSyncStatus();
+    syncNow(false); // background push to Google Sheet (no-op if no URL / offline)
   }
   function updateRecCount(){
     var n=getLog().length, el=$("recCount");
@@ -697,11 +718,82 @@
   $("btnClear").addEventListener("click", function(){
     var n=getLog().length;
     if(!n){ toast("Nothing to clear"); return; }
-    if(confirm("Delete all "+n+" saved records on this phone? This cannot be undone.")){
-      setLog([]); updateRecCount(); toast("Records cleared");
-    }
+    var msg="Delete all "+n+" record"+(n===1?"":"s")+" on THIS phone?";
+    if(syncURL()){ msg+="\n\nRecords already sent to your Google Sheet stay there — only this phone's local list is cleared."; }
+    else { msg+=" This cannot be undone."; }
+    if(confirm(msg)){ setLog([]); updateRecCount(); updateSyncStatus(); toast("Local records cleared"); }
   });
   updateRecCount();
+
+  // ---------- cloud sync (Google Sheet via Apps Script Web App) ----------
+  var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
+  function deviceId(){
+    var d=LS.get(DEV_KEY,"");
+    if(!d){ d="ph-"+Math.random().toString(36).slice(2,7)+Date.now().toString(36).slice(-3); LS.set(DEV_KEY,d); }
+    return d;
+  }
+  function syncURL(){ return String(LS.get(SYNC_URL_KEY,"")||"").trim(); }
+  function syncTok(){ return String(LS.get(SYNC_TOK_KEY,"")||"").trim(); }
+  function pendingRecords(){ return getLog().filter(function(r){ return !r.synced; }); }
+  function toSyncRecord(r){
+    return { key:bizKey(r), savedAt:r.savedAt, when:fmtWhen(r.when),
+      branch:r.branch, stage:r.stage, mR:r.mR, mB:r.mB, sR:r.sR, sB:r.sB, rR:r.rR, rB:r.rB,
+      staff:r.staff, remarks:r.remarks, device:r.device||deviceId() };
+  }
+  function setSyncStatus(txt, cls){ var el=$("syncStatus"); if(el){ el.textContent=txt; el.className="sync-status "+cls; } }
+  function updateSyncStatus(){
+    if(!syncURL()){ setSyncStatus("Cloud sync off — add your Google Sheet link","off"); return; }
+    var log=getLog(), pend=log.filter(function(r){return !r.synced;}).length;
+    if(pend===0){ setSyncStatus((log.length?("All "+log.length+" synced to Google Sheet \u2713"):"Connected \u2014 no records yet"),"ok"); }
+    else { setSyncStatus(pend+" record"+(pend===1?"":"s")+" waiting"+(navigator.onLine?"":" (offline)"),"wait"); }
+  }
+  var syncing=false;
+  function syncNow(manual){
+    var url=syncURL();
+    if(!url){ if(manual) toast("Add your Google Sheet link in Sync settings first"); updateSyncStatus(); return; }
+    if(syncing) return;
+    var pend=pendingRecords();
+    if(!pend.length){ if(manual) toast("Nothing to sync \u2014 all up to date"); updateSyncStatus(); return; }
+    if(!navigator.onLine){ if(manual) toast("You're offline \u2014 it'll sync automatically when back online"); updateSyncStatus(); return; }
+    syncing=true; if(manual) setSyncStatus("Syncing "+pend.length+"\u2026","wait");
+    var payload={ token:syncTok(), device:deviceId(), records:pend.map(toSyncRecord) };
+    fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(!data || !data.ok){ throw new Error((data&&data.error)||"server refused"); }
+        var done={}; (data.keys||[]).forEach(function(k){ done[k]=1; });
+        var log=getLog(), now=new Date().toISOString(), cnt=0;
+        log.forEach(function(r){ if(done[bizKey(r)] && !r.synced){ r.synced=true; r.syncedAt=now; cnt++; } });
+        setLog(log); syncing=false; updateSyncStatus();
+        if(manual) toast(cnt?("Synced \u2713 ("+cnt+")"):"Already up to date");
+      })
+      .catch(function(err){
+        syncing=false;
+        var m=(err&&err.message)?err.message:"check link / connection";
+        setSyncStatus("Sync failed \u2014 "+m,"err");
+        if(manual) toast("Sync failed: "+m);
+      });
+  }
+  // settings panel
+  $("syncUrlIn").value=syncURL(); $("syncTokIn").value=syncTok();
+  $("btnSyncCfg").addEventListener("click", function(){
+    var c=$("syncCfg"); var showing=!c.classList.toggle("hidden");
+    this.textContent = showing ? "Hide settings" : "Sync settings";
+  });
+  $("saveSyncCfg").addEventListener("click", function(){
+    var u=$("syncUrlIn").value.trim();
+    if(u && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(u)){
+      if(!confirm("That doesn't look like an Apps Script Web App URL (should end in /exec). Save anyway?")) return;
+    }
+    LS.set(SYNC_URL_KEY,u); LS.set(SYNC_TOK_KEY,$("syncTokIn").value.trim());
+    $("syncCfg").classList.add("hidden"); $("btnSyncCfg").textContent="Sync settings";
+    toast("Sync settings saved"); updateSyncStatus(); syncNow(true);
+  });
+  $("btnSyncNow").addEventListener("click", function(){ syncNow(true); });
+  window.addEventListener("online", function(){ updateSyncStatus(); syncNow(false); });
+  window.addEventListener("offline", updateSyncStatus);
+  updateSyncStatus();
+  setTimeout(function(){ syncNow(false); }, 1200);
 
   // show stamped image so the user can long-press → Save image (works in any Android browser)
   var overlayURL=null;
