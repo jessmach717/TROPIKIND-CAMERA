@@ -727,13 +727,27 @@
 
   // ---------- cloud sync (Google Sheet via Apps Script Web App) ----------
   var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
+  var SYNC_CFG_VER_KEY="tk_sync_cfg_version";
+  var DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec";
+  var DEFAULT_SYNC_TOKEN="tropikind2026";
+  var DEFAULT_SYNC_CFG_VERSION="2026-09-22-v2";
+
+  // Apply the built-in TropiKind endpoint once per config version.
+  // This updates existing phones from the previous endpoint, while still
+  // allowing Sync settings to be edited afterwards if ever needed.
+  if(LS.get(SYNC_CFG_VER_KEY,"")!==DEFAULT_SYNC_CFG_VERSION){
+    LS.set(SYNC_URL_KEY,DEFAULT_SYNC_URL);
+    LS.set(SYNC_TOK_KEY,DEFAULT_SYNC_TOKEN);
+    LS.set(SYNC_CFG_VER_KEY,DEFAULT_SYNC_CFG_VERSION);
+  }
+
   function deviceId(){
     var d=LS.get(DEV_KEY,"");
     if(!d){ d="ph-"+Math.random().toString(36).slice(2,7)+Date.now().toString(36).slice(-3); LS.set(DEV_KEY,d); }
     return d;
   }
-  function syncURL(){ return String(LS.get(SYNC_URL_KEY,"")||"").trim(); }
-  function syncTok(){ return String(LS.get(SYNC_TOK_KEY,"")||"").trim(); }
+  function syncURL(){ return String(LS.get(SYNC_URL_KEY,DEFAULT_SYNC_URL)||DEFAULT_SYNC_URL).trim(); }
+  function syncTok(){ return String(LS.get(SYNC_TOK_KEY,DEFAULT_SYNC_TOKEN)||DEFAULT_SYNC_TOKEN).trim(); }
   function pendingRecords(){ return getLog().filter(function(r){ return !r.synced; }); }
   function toSyncRecord(r){
     return { key:bizKey(r), savedAt:r.savedAt, when:fmtWhen(r.when),
