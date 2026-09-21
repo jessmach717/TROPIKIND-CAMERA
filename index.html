@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TropiKind Field Camera</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TropiKind">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1a30">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  :root{
+    --ink:#06101f; --navy:#0a1a30; --navy-2:#0e2545;
+    --gold:#e0b13a; --gold-soft:#f2d27a;
+    --white:#f4f7fb; --muted:#9fb2c9;
+    --line:rgba(224,177,58,.22);
+    --green:#33c26b; --amber:#ffab2e; --red:#ff5648;
+    --bg:#06101f;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  :root:not([data-theme="light"]){ color-scheme:dark; }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="light"]){ /* keep dark: this is a camera tool */ }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--white);}
+  body{
+    min-height:100dvh;
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(224,177,58,.10), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(51,194,107,.06), transparent 60%),
+      var(--bg);
+    padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 18px);
+  }
+  .wrap{max-width:560px;margin:0 auto;}
+
+  header.brand{
+    display:flex;align-items:center;gap:12px;
+    padding:16px 4px 14px;
+  }
+  .mark{
+    width:40px;height:40px;border-radius:11px;flex:0 0 auto;
+    background:linear-gradient(160deg,var(--navy-2),var(--navy));
+    border:1px solid var(--line);
+    display:grid;place-items:center;font-size:20px;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+  .brand h1{font-size:17px;letter-spacing:.14em;margin:0;font-weight:700;}
+  .brand h1 .r{color:var(--gold);font-size:11px;vertical-align:super;margin-left:1px;}
+  .brand p{margin:2px 0 0;font-size:10.5px;letter-spacing:.34em;color:var(--muted);text-transform:uppercase;}
+  .install-btn{margin-left:auto;flex:0 0 auto;padding:9px 14px;font-size:13px;font-weight:700;gap:6px;border-radius:11px;background:linear-gradient(160deg,var(--gold-soft),var(--gold));color:#2a1e02;border:none;box-shadow:0 6px 18px rgba(224,177,58,.3)}
+
+  /* ---------- Preview ---------- */
+  .stage{
+    position:relative;border-radius:16px;overflow:hidden;
+    background:#02060d;border:1px solid rgba(255,255,255,.06);
+    box-shadow:0 12px 40px rgba(0,0,0,.5);
+    aspect-ratio:3/4;display:grid;place-items:center;
+  }
+  .stage video, .stage canvas{width:100%;height:100%;object-fit:cover;display:block;}
+  .stage canvas{display:none;}
+  .stage .empty{
+    position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;
+    color:var(--muted);text-align:center;padding:24px;
+  }
+  .stage .empty svg{opacity:.5}
+  .stage .empty b{color:var(--white);font-weight:600;font-size:15px;}
+  .stage .empty span{font-size:12.5px;line-height:1.5;max-width:230px}
+  .live-dot{
+    position:absolute;top:12px;left:12px;display:none;align-items:center;gap:7px;
+    background:rgba(6,16,31,.72);border:1px solid var(--line);
+    padding:5px 10px;border-radius:999px;font-size:11px;letter-spacing:.08em;
+  }
+  .live-dot.on{display:flex}
+  .live-dot i{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ---------- Buttons ---------- */
+  .row{display:flex;gap:10px;margin-top:12px;}
+  .row>*{flex:1}
+  button{
+    font:inherit;cursor:pointer;border-radius:12px;border:1px solid transparent;
+    padding:13px 14px;font-weight:600;font-size:14px;color:var(--white);
+    background:var(--navy-2);border-color:rgba(255,255,255,.08);
+    transition:transform .06s ease, background .15s ease, border-color .15s ease;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  }
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.gold{background:linear-gradient(160deg,var(--gold-soft),var(--gold));color:#2a1e02;border-color:transparent;box-shadow:0 8px 22px rgba(224,177,58,.28)}
+  button.ghost{background:transparent;border-color:var(--line);color:var(--gold-soft)}
+  .icon-btn svg{width:18px;height:18px}
+
+  /* ---------- Form ---------- */
+  .panel{
+    margin-top:14px;background:linear-gradient(180deg,rgba(14,37,69,.5),rgba(10,26,48,.35));
+    border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px 14px 16px;
+  }
+  .field{margin-bottom:13px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:11.5px;color:var(--muted);margin:0 0 6px 2px;font-weight:600;letter-spacing:.02em}
+  select,input[type="text"],input[type="number"],input[type="datetime-local"],textarea{
+    width:100%;font:inherit;color:var(--white);background:#081525;
+    border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:12px;
+  }
+  select:focus,input:focus,textarea:focus{outline:2px solid rgba(224,177,58,.5);outline-offset:0;border-color:transparent}
+  textarea{resize:vertical;min-height:44px}
+  .two{display:flex;gap:10px}
+  .two>div{flex:1}
+  .sku-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .sku-row:last-child{margin-bottom:0}
+  .sku-row .nm{flex:0 0 84px;font-weight:800;font-size:15px;color:var(--gold-soft);letter-spacing:.01em}
+  .sku-row .cell{flex:1}
+  .sku-row .cell small{display:block;font-size:10px;color:var(--muted);margin:0 0 3px 3px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .sku-row input{width:100%;font-size:30px;font-weight:800;text-align:center;padding:12px 4px;background:#081525;border:1px solid rgba(255,255,255,.1);border-radius:11px;color:#fff}
+  .sku-row input.rf{color:#5be08a}
+  .sku-row input.boc{color:#ff9a4d}
+  .sku-row input::placeholder{color:rgba(255,255,255,.26);font-weight:800}
+  .inline{display:flex;gap:8px;align-items:stretch}
+  .inline input{flex:1}
+  .inline button{flex:0 0 auto;padding:0 14px}
+
+  /* segmented stage toggle */
+  .seg{display:flex;background:#081525;border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:4px;gap:4px}
+  .seg button{flex:1;padding:10px;border-radius:8px;background:transparent;border:none;color:var(--muted);font-weight:700;letter-spacing:.06em}
+  .seg button[aria-pressed="true"]{color:#06101f}
+  .seg button[data-v="BEFORE"][aria-pressed="true"]{background:var(--amber)}
+  .seg button[data-v="AFTER"][aria-pressed="true"]{background:var(--green)}
+  .seg.multi button[aria-pressed="true"]{background:var(--gold);color:#06101f}
+
+  .linkbtn{background:none;border:none;color:var(--gold-soft);font-size:12px;padding:8px 2px 0;width:auto;cursor:pointer;font-weight:600}
+  .img-overlay{position:fixed;inset:0;background:rgba(3,7,14,.95);z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);gap:14px}
+  .img-overlay.show{display:flex}
+  .img-overlay img{max-width:100%;max-height:64vh;border-radius:12px;box-shadow:0 12px 44px rgba(0,0,0,.6)}
+  .img-overlay .hint{color:var(--gold-soft);font-size:14px;text-align:center;max-width:360px;line-height:1.55}
+  .img-overlay .hint b{color:#fff}
+  .img-overlay .close{flex:0 0 auto;padding:12px 26px}
+
+  .save-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5}
+  .hidden{display:none !important}
+  .toast{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translateX(-50%) translateY(20px);
+    background:var(--navy-2);border:1px solid var(--line);color:var(--white);
+    padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90vw;text-align:center
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .recpanel{margin-top:14px}
+  .recrow{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;gap:10px}
+  .recrow #recCount{font-weight:700;color:var(--white);font-size:15px}
+  .recrow .rec-hint{font-size:11px;color:var(--muted)}
+  button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
+  .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="mark">🍌</div>
+    <div>
+      <h1>TROPIKIND<span class="r">®</span></h1>
+      <p>Field Camera · Grown Kind</p>
+    </div>
+    <button id="installBtn" class="install-btn hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>Install</button>
+  </header>
+
+  <!-- Preview -->
+  <div class="stage" id="stage">
+    <canvas id="preview"></canvas>
+    <div class="empty" id="empty">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <b>No photo yet</b>
+      <span>Open the camera or upload a shot of the display, then stamp it.</span>
+    </div>
+  </div>
+
+  <!-- capture controls -->
+  <div class="row">
+    <button id="btnCam" class="gold icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take photo</button>
+    <button id="btnUpload" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
+    <button id="btnRetake" class="ghost hidden">Retake</button>
+  </div>
+  <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
+  <input type="file" id="file" accept="image/*" class="hidden">
+
+  <!-- details -->
+  <div class="panel">
+    <div class="field">
+      <label>Visit stage</label>
+      <div class="seg" id="seg">
+        <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
+        <button data-v="AFTER" aria-pressed="true">AFTER</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Product on display</label>
+      <div class="seg multi" id="prod">
+        <button data-v="Mingles" aria-pressed="true">Mingles</button>
+        <button data-v="Singles" aria-pressed="true">Singles</button>
+        <button data-v="RTE" aria-pressed="true">RTE</button>
+      </div>
+    </div>
+
+    <div class="field" id="skuCountsField">
+      <label>Refill &amp; BO — per product</label>
+      <div id="skuCounts"></div>
+    </div>
+
+    <div class="field">
+      <label for="branch">Store branch</label>
+      <div class="inline">
+        <select id="branch"></select>
+        <button class="ghost" id="addBranch">+ Add</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="when">Date &amp; time</label>
+      <div class="inline">
+        <input type="datetime-local" id="when">
+        <button class="ghost" id="btnNow">Now</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="staff">Delivery staff</label>
+      <div class="inline">
+        <select id="staff"></select>
+        <button class="ghost" id="addStaff">+ Add</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="remarks">Remarks (optional)</label>
+      <textarea id="remarks" placeholder="e.g. defects removed, display re-fronted"></textarea>
+    </div>
+  </div>
+
+  <div class="row">
+    <button id="btnSave" class="gold" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save to Photos</button>
+  </div>
+  <div class="row">
+    <button id="btnDownload" class="ghost" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download file</button>
+  </div>
+  <button class="linkbtn" id="btnGallery">Save to Gallery manually (long-press image)</button>
+  <div class="save-note" id="saveNote">Add a photo first — the stamp is baked into the saved image.</div>
+
+  <div class="panel recpanel">
+    <div class="recrow">
+      <span id="recCount">0 records saved</span>
+      <span class="rec-hint">saved on this phone</span>
+    </div>
+    <div class="row">
+      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export CSV (Excel)</button>
+      <button id="btnClear" class="ghost danger">Clear</button>
+    </div>
+  </div>
+
+  <div class="foot">TROPIKIND® · One of a kind · Field documentation</div>
+</div>
+
+<div class="img-overlay" id="imgOverlay">
+  <div class="hint">Press &amp; hold the picture, then tap <b>“Save image”</b> (or <b>“Download image”</b>) to add it to your Gallery.</div>
+  <img id="resultImg" alt="TropiKind stamped photo">
+  <button class="ghost close" id="closeOverlay">Done</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BRANCHES = ["Cabantian (new) St Mary Church","Bajada","Lanang","Damosa 1","Flyover",
+    "Cabantian 1 Country Homes","MTS","Sandawa","Obrero 2 (Kumon)","Anda","Acacia","UM Matina",
+    "Ecoland","Cabaguio","DMC","Doverlanes","Matina Crossing","Mabini","Rizal","Communal",
+    "Sasa KM9","Torres","Sta. Ana","Roxas","Jacinto 5","Jacinto 4","Km 6 Buhangin",
+    "Km 5 Buhangin","Tagum 7","Tagum 16"];
+  var STAFF = ["Laydan","Shara","Roxanne","Dennis","Rey"];
+
+  // ---------- storage helpers ----------
+  var LS = {
+    get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var stageEl=$("stage"), preview=$("preview"), empty=$("empty"), toastEl=$("toast");
+  var btnCam=$("btnCam"), btnUpload=$("btnUpload"),
+      btnRetake=$("btnRetake"), file=$("file"), fileCam=$("fileCam"), btnSave=$("btnSave"),
+      btnDownload=$("btnDownload"), saveNote=$("saveNote");
+
+  var pctx = preview.getContext("2d");
+  var base = document.createElement("canvas"); // full-res source
+  var hasImage=false;
+
+  var state = {
+    stage: LS.get("tk_stage","AFTER"),
+    branch: LS.get("tk_branch","Communal"),
+    staff: LS.get("tk_staff","Laydan")
+  };
+
+  // ---------- populate selects ----------
+  function fillSelect(sel, list, extraKey, current){
+    var custom = LS.get(extraKey, []);
+    var all = list.concat(custom.filter(function(x){return list.indexOf(x)<0;}));
+    sel.innerHTML="";
+    all.forEach(function(v){
+      var o=document.createElement("option"); o.value=v; o.textContent=v;
+      if(v===current) o.selected=true; sel.appendChild(o);
+    });
+  }
+  fillSelect($("branch"), BRANCHES, "tk_custom_branch", state.branch);
+  fillSelect($("staff"), STAFF, "tk_custom_staff", state.staff);
+
+  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); draw(); });
+  $("staff").addEventListener("change",function(){ state.staff=this.value; LS.set("tk_staff",state.staff); draw(); });
+
+  $("addBranch").addEventListener("click",function(){
+    var v=prompt("New branch name:"); if(!v) return; v=v.trim(); if(!v) return;
+    var c=LS.get("tk_custom_branch",[]); if(c.indexOf(v)<0){c.push(v);LS.set("tk_custom_branch",c);}
+    state.branch=v; fillSelect($("branch"),BRANCHES,"tk_custom_branch",v); LS.set("tk_branch",v); draw();
+  });
+  $("addStaff").addEventListener("click",function(){
+    var v=prompt("New staff name:"); if(!v) return; v=v.trim(); if(!v) return;
+    var c=LS.get("tk_custom_staff",[]); if(c.indexOf(v)<0){c.push(v);LS.set("tk_custom_staff",c);}
+    state.staff=v; fillSelect($("staff"),STAFF,"tk_custom_staff",v); LS.set("tk_staff",v); draw();
+  });
+
+  // ---------- stage toggle ----------
+  var seg=$("seg");
+  function setStage(v){
+    state.stage=v; LS.set("tk_stage",v);
+    Array.prototype.forEach.call(seg.querySelectorAll("button"),function(b){
+      b.setAttribute("aria-pressed", b.dataset.v===v ? "true":"false");
+    });
+    draw();
+  }
+  seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(b) setStage(b.dataset.v); });
+  setStage(state.stage);
+
+  // ---------- product on display (multi-select) ----------
+  var prodSel = LS.get("tk_prod", ["Mingles","Singles","RTE"]);
+  var prod=$("prod");
+  function renderProd(){
+    Array.prototype.forEach.call(prod.querySelectorAll("button"),function(b){
+      b.setAttribute("aria-pressed", prodSel.indexOf(b.dataset.v)>=0 ? "true":"false");
+    });
+  }
+  prod.addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    var v=b.dataset.v, i=prodSel.indexOf(v);
+    if(i>=0) prodSel.splice(i,1); else prodSel.push(v);
+    LS.set("tk_prod", prodSel); renderProd(); renderSkuCounts(); draw();
+  });
+
+  // per-SKU Refill / BO (per-visit, not persisted)
+  var counts={Mingles:{refill:"",bo:""},Singles:{refill:"",bo:""},RTE:{refill:"",bo:""}};
+  var ORDER=["Mingles","Singles","RTE"];
+  var skuBox=$("skuCounts"), skuField=$("skuCountsField");
+  function renderSkuCounts(){
+    var active=ORDER.filter(function(s){ return prodSel.indexOf(s)>=0; });
+    skuBox.innerHTML="";
+    if(!active.length){ skuField.style.display="none"; return; }
+    skuField.style.display="";
+    active.forEach(function(s){
+      var row=document.createElement("div"); row.className="sku-row";
+      row.innerHTML='<div class="nm">'+s+'</div>'+
+        '<div class="cell"><small>Refill</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="rf"></div>'+
+        '<div class="cell"><small>BO</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="boc"></div>';
+      var ins=row.querySelectorAll("input");
+      ins[0].value=counts[s].refill; ins[1].value=counts[s].bo;
+      ins[0].addEventListener("input",function(){ counts[s].refill=this.value; draw(); });
+      ins[1].addEventListener("input",function(){ counts[s].bo=this.value; draw(); });
+      skuBox.appendChild(row);
+    });
+  }
+  renderProd(); renderSkuCounts();
+
+  // ---------- date/time ----------
+  function pad(n){return (n<10?"0":"")+n;}
+  function toLocalInput(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function setNow(){ $("when").value=toLocalInput(new Date()); draw(); }
+  $("btnNow").addEventListener("click", setNow);
+  $("when").addEventListener("change", draw);
+  setNow();
+
+  $("remarks").addEventListener("input", draw);
+
+  // ---------- photo input (native camera or gallery) ----------
+  btnCam.addEventListener("click", function(){ fileCam.click(); });
+  btnUpload.addEventListener("click", function(){ file.click(); });
+
+  function loadFromInput(input){
+    var f = input.files && input.files[0];
+    input.value = "";                       // allow re-picking same file
+    if(!f) return;
+    if(f.type && f.type.indexOf("image/")!==0){ toast("Please choose an image file."); return; }
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function(){
+      base.width  = img.naturalWidth  || img.width;
+      base.height = img.naturalHeight || img.height;
+      if(!base.width || !base.height){ toast("Couldn't read that image."); URL.revokeObjectURL(url); return; }
+      base.getContext("2d").drawImage(img,0,0,base.width,base.height);
+      URL.revokeObjectURL(url);
+      onImageReady();
+    };
+    img.onerror = function(){ toast("Couldn't open that photo — try Upload / another image."); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  file.addEventListener("change", function(){ loadFromInput(file); });
+  fileCam.addEventListener("change", function(){ loadFromInput(fileCam); });
+
+  btnRetake.addEventListener("click", function(){
+    hasImage=false; preview.style.display="none"; empty.classList.remove("hidden");
+    btnRetake.classList.add("hidden"); btnSave.disabled=true; btnDownload.disabled=true;
+    saveNote.textContent="Add a photo first — the stamp is baked into the saved image.";
+  });
+
+  function onImageReady(){
+    hasImage=true; empty.classList.add("hidden");
+    preview.style.display="block"; btnRetake.classList.remove("hidden");
+    btnSave.disabled=false; btnDownload.disabled=false;
+    saveNote.textContent="Looks right? The stamp updates live. Tap save to keep it.";
+    draw();
+  }
+
+  // ---------- drawing the stamp ----------
+  function fitPreview(){
+    if(!hasImage) return {w:0,h:0};
+    var maxW = stageEl.clientWidth, maxH = stageEl.clientHeight;
+    var r = Math.min(maxW/base.width, maxH/base.height);
+    var w = Math.round(base.width*r), h=Math.round(base.height*r);
+    preview.width=base.width; preview.height=base.height; // draw full-res, CSS scales via object-fit
+    return {w:w,h:h};
+  }
+
+  function humanDateTime(){
+    var v=$("when").value; var d = v? new Date(v) : new Date();
+    if(isNaN(d.getTime())) d=new Date();
+    var mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+    var h=d.getHours(), ap=h>=12?"PM":"AM", h12=h%12; if(h12===0)h12=12;
+    return {
+      date: mo+" "+d.getDate()+", "+d.getFullYear(),
+      time: h12+":"+pad(d.getMinutes())+" "+ap
+    };
+  }
+
+  // rounded rect
+  function rr(ctx,x,y,w,h,r){ ctx.beginPath();
+    ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+
+  // gold sprout emblem (Grown Kind mark)
+  function emblem(ctx,ex,ey,R){
+    ctx.save();
+    ctx.lineCap="round"; ctx.lineJoin="round";
+    // ring
+    ctx.strokeStyle="#e0b13a"; ctx.lineWidth=Math.max(2,R*0.10);
+    ctx.beginPath(); ctx.arc(ex,ey,R,0,Math.PI*2); ctx.stroke();
+    // stem
+    ctx.lineWidth=Math.max(2,R*0.10);
+    ctx.beginPath(); ctx.moveTo(ex,ey+R*0.52); ctx.lineTo(ex,ey-R*0.10); ctx.stroke();
+    // leaves
+    ctx.fillStyle="#e0b13a";
+    ctx.save(); ctx.translate(ex,ey-R*0.02); ctx.rotate(-0.62);
+    ctx.beginPath(); ctx.ellipse(-R*0.30,0,R*0.36,R*0.17,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.translate(ex,ey-R*0.02); ctx.rotate(0.62);
+    ctx.beginPath(); ctx.ellipse(R*0.30,0,R*0.36,R*0.17,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.restore();
+  }
+
+  function drawStamp(ctx, W, H){
+    var S = W/1080;                 // scale factor vs reference width
+    var u = function(n){ return Math.round(n*S); };
+    var P = u(30);                  // padding
+    var active=ORDER.filter(function(s){ return prodSel.indexOf(s)>=0; });
+    var nSku=active.length;
+    var rem=$("remarks").value.trim();
+    // dynamic panel height from content
+    var afterStage=144;
+    var lastY=(nSku>0)?(afterStage+62+(nSku-1)*64):afterStage;
+    var staffY=lastY+60;
+    var bottomY=staffY+(rem?44:0)+30;
+    var panelH=u(Math.max(300,bottomY));
+    var y0 = H - panelH;
+
+    // ----- top header band (masthead) -----
+    var hbH = Math.round(114*S);
+    var hg = ctx.createLinearGradient(0,0,W,0);
+    hg.addColorStop(0,"#0a1a30"); hg.addColorStop(.5,"#0e2748"); hg.addColorStop(1,"#0a1a30");
+    ctx.fillStyle=hg; ctx.fillRect(0,0,W,hbH);
+    // top gloss
+    var gloss=ctx.createLinearGradient(0,0,0,hbH);
+    gloss.addColorStop(0,"rgba(255,255,255,.07)"); gloss.addColorStop(.28,"rgba(255,255,255,0)");
+    ctx.fillStyle=gloss; ctx.fillRect(0,0,W,hbH);
+    // framing gold rules
+    ctx.fillStyle="rgba(224,177,58,.55)"; ctx.fillRect(0,0,W,Math.round(3*S));
+    ctx.fillStyle="rgba(224,177,58,.40)"; ctx.fillRect(0,hbH-Math.round(12*S),W,Math.round(2*S));
+    ctx.fillStyle="#e0b13a"; ctx.fillRect(0,hbH-Math.round(6*S),W,Math.round(6*S));
+
+    var hpad=Math.round(36*S), hcy=(hbH-Math.round(9*S))/2;
+    // emblem
+    var R=Math.round(35*S), ex=hpad+R, ey=hcy;
+    emblem(ctx,ex,ey,R);
+    // divider after emblem
+    ctx.fillStyle="rgba(224,177,58,.35)";
+    ctx.fillRect(ex+R+Math.round(20*S),hcy-Math.round(34*S),Math.round(2*S),Math.round(68*S));
+
+    // wordmark + subline
+    ctx.save();
+    ctx.textBaseline="middle"; ctx.textAlign="left";
+    var wx=ex+R+Math.round(38*S);
+    if("letterSpacing" in ctx){ try{ctx.letterSpacing=Math.round(4*S)+"px";}catch(e){} }
+    ctx.fillStyle="#ffffff"; ctx.font="800 "+Math.round(54*S)+"px Segoe UI, sans-serif";
+    ctx.fillText("TROPIKIND", wx, hcy-Math.round(16*S));
+    if("letterSpacing" in ctx){ try{ctx.letterSpacing=Math.round(8*S)+"px";}catch(e){} }
+    ctx.fillStyle="#f2d27a"; ctx.font="700 "+Math.round(21*S)+"px Segoe UI, sans-serif";
+    ctx.fillText("DELIVERY MONITORING", wx+Math.round(2*S), hcy+Math.round(23*S));
+    if("letterSpacing" in ctx){ try{ctx.letterSpacing="0px";}catch(e){} }
+    ctx.restore();
+
+    // right tagline
+    ctx.save();
+    ctx.textBaseline="middle"; ctx.textAlign="right";
+    if("letterSpacing" in ctx){ try{ctx.letterSpacing=Math.round(3*S)+"px";}catch(e){} }
+    ctx.fillStyle="rgba(210,226,244,.68)"; ctx.font="600 "+Math.round(20*S)+"px Segoe UI, sans-serif";
+    ctx.fillText("GROWN KIND · ONE OF A KIND", W-hpad, hcy);
+    if("letterSpacing" in ctx){ try{ctx.letterSpacing="0px";}catch(e){} }
+    ctx.restore();
+
+    // bottom gradient scrim
+    var g=ctx.createLinearGradient(0,y0-70*S,0,H);
+    g.addColorStop(0,"rgba(4,10,22,0)"); g.addColorStop(.35,"rgba(4,10,22,.80)"); g.addColorStop(1,"rgba(4,10,22,.95)");
+    ctx.fillStyle=g; ctx.fillRect(0,y0-70*S,W,panelH+70*S);
+
+    // gold accent bar
+    ctx.fillStyle="#e0b13a"; ctx.fillRect(0,y0,Math.round(10*S),panelH);
+
+    // ----- text block (full width) -----
+    var tx=P+Math.round(12*S), tw=W-tx-P;
+    var dt=humanDateTime();
+    var stageColor = state.stage==="AFTER" ? "#33c26b" : "#ffab2e";
+
+    // branch name (headline)
+    ctx.textAlign="left"; ctx.fillStyle="#ffffff";
+    var fs=76; ctx.font="800 "+u(fs)+"px Segoe UI, sans-serif";
+    var branch = state.branch || "—";
+    while(ctx.measureText(branch).width>tw && fs>34){ fs-=2; ctx.font="800 "+u(fs)+"px Segoe UI, sans-serif"; }
+    ctx.fillText(branch, tx, y0+u(88));
+
+    // stage pill + date + time line
+    var sy=y0+u(144);
+    ctx.font="800 "+u(34)+"px Segoe UI, sans-serif";
+    var stLabel=state.stage; var stW=ctx.measureText(stLabel).width+u(34);
+    ctx.fillStyle=stageColor; rr(ctx,tx,sy-u(34),stW,u(50),u(25)); ctx.fill();
+    ctx.fillStyle="#06101f"; ctx.fillText(stLabel, tx+u(17), sy+u(3));
+    ctx.fillStyle="#e6f0fb"; ctx.font="600 "+u(34)+"px Segoe UI, sans-serif";
+    ctx.fillText("  "+dt.date+"  ·  "+dt.time, tx+stW, sy+u(3));
+
+    // per-SKU Refill / BO rows
+    function chipAt(x,label,val,col,by){
+      ctx.font="800 "+u(34)+"px Segoe UI, sans-serif";
+      var t=label+" "+val;
+      var w=ctx.measureText(t).width+u(34);
+      ctx.fillStyle="rgba(255,255,255,.10)"; rr(ctx,x,by-u(38),w,u(54),u(14)); ctx.fill();
+      ctx.fillStyle=col; ctx.fillText(label, x+u(17), by);
+      var lw=ctx.measureText(label+" ").width;
+      ctx.fillStyle="#fff"; ctx.fillText(val, x+u(17)+lw, by);
+      return x+w+u(12);
+    }
+    for(var si=0; si<nSku; si++){
+      var sku=active[si];
+      var by=y0+u(206+si*64);
+      ctx.textAlign="left"; ctx.fillStyle="#f2d27a"; ctx.font="800 "+u(36)+"px Segoe UI, sans-serif";
+      ctx.fillText(sku, tx, by);
+      var c=counts[sku]||{};
+      var cx=tx+u(220);
+      cx=chipAt(cx,"Refill",(c.refill||"0"),"#33c26b",by);
+      cx=chipAt(cx,"BO",(c.bo||"0"),"#ff8a2e",by);
+    }
+    if(nSku===0){
+      ctx.fillStyle="#f2d27a"; ctx.font="800 "+u(32)+"px Segoe UI, sans-serif";
+      ctx.fillText("—", tx, y0+u(206));
+    }
+
+    // staff
+    ctx.fillStyle="#cdd9e8"; ctx.font="700 "+u(36)+"px Segoe UI, sans-serif";
+    ctx.fillText("Staff: "+(state.staff||"—"), tx, y0+u(staffY));
+
+    // remarks (optional, bottom)
+    if(rem){
+      ctx.fillStyle="rgba(230,238,248,.92)"; ctx.font="600 "+u(28)+"px Segoe UI, sans-serif";
+      var maxW=W-tx-P; var line=rem;
+      while(ctx.measureText(line).width>maxW && line.length>3){ line=line.slice(0,-2); }
+      if(line!==rem) line=line.slice(0,-1)+"…";
+      ctx.fillText(line, tx, y0+panelH-u(20));
+    }
+  }
+
+  function draw(){
+    if(!hasImage) return;
+    fitPreview();
+    pctx.clearRect(0,0,preview.width,preview.height);
+    pctx.drawImage(base,0,0);
+    drawStamp(pctx, preview.width, preview.height);
+  }
+  window.addEventListener("resize", draw);
+
+  // ---------- save ----------
+  var claudeUse = (window.claude && typeof window.claude.use==="function") ? window.claude.use.bind(window.claude) : null;
+
+  function filename(){
+    var dt=humanDateTime();
+    var safe=function(s){ return (s||"").replace(/[^\w]+/g,"-").replace(/^-+|-+$/g,""); };
+    var d=$("when").value ? new Date($("when").value) : new Date();
+    var stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes());
+    return "TROPIKIND_"+safe(state.branch)+"_"+state.stage+"_"+stamp+".jpg";
+  }
+
+  function buildBlob(cb){
+    var out=document.createElement("canvas"); out.width=base.width; out.height=base.height;
+    var octx=out.getContext("2d"); octx.drawImage(base,0,0); drawStamp(octx,out.width,out.height);
+    out.toBlob(function(blob){ cb(blob, filename()); }, "image/jpeg", 0.92);
+  }
+
+  // write to disk (Claude app save surface, else browser download)
+  function diskSave(blob,name){
+    if(claudeUse){
+      claudeUse("downloads").then(function(dl){
+        if(!dl){ fallbackSave(blob,name); return; }
+        dl.save({filename:name, data:blob}).then(function(){ toast("Saved \u2713"); })
+          .catch(function(err){
+            if(err&&err.code==="declined"){ toast("Save cancelled"); }
+            else fallbackSave(blob,name);
+          });
+      }).catch(function(){ fallbackSave(blob,name); });
+    } else { fallbackSave(blob,name); }
+  }
+
+  // ---------- visit records log (CSV / Excel) ----------
+  var LOG_KEY="tk_log";
+  function getLog(){ return LS.get(LOG_KEY, []); }
+  function setLog(a){ LS.set(LOG_KEY, a); }
+  function selSku(s){ return prodSel.indexOf(s)>=0; }
+  function cval(v){ return (v===""||v==null)?"0":String(v); }
+  function fmtWhen(v){
+    var d=v?new Date(v):new Date(); if(isNaN(d.getTime())) d=new Date();
+    var h=d.getHours(),ap=h>=12?"PM":"AM",h12=h%12||12;
+    return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" "+h12+":"+pad(d.getMinutes())+" "+ap;
+  }
+  function currentRecord(){
+    return {
+      savedAt:new Date().toISOString(),
+      when:$("when").value||toLocalInput(new Date()),
+      branch:state.branch||"", stage:state.stage,
+      mR:selSku("Mingles")?cval(counts.Mingles.refill):"", mB:selSku("Mingles")?cval(counts.Mingles.bo):"",
+      sR:selSku("Singles")?cval(counts.Singles.refill):"", sB:selSku("Singles")?cval(counts.Singles.bo):"",
+      rR:selSku("RTE")?cval(counts.RTE.refill):"", rB:selSku("RTE")?cval(counts.RTE.bo):"",
+      staff:state.staff||"", remarks:$("remarks").value.trim()
+    };
+  }
+  function bizKey(r){ return [r.when,r.branch,r.stage,r.mR,r.mB,r.sR,r.sB,r.rR,r.rB,r.staff,r.remarks].join("|"); }
+  function logVisit(){
+    var rec=currentRecord(), log=getLog();
+    if(log.length && bizKey(log[log.length-1])===bizKey(rec)) return; // skip accidental double-tap
+    log.push(rec); setLog(log); updateRecCount();
+  }
+  function updateRecCount(){
+    var n=getLog().length, el=$("recCount");
+    if(el) el.textContent = n+" record"+(n===1?"":"s")+" saved";
+  }
+  function csvCell(v){ v=(v==null?"":String(v)); return /[",\r\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
+  function toCSV(){
+    var head=["Saved At","Visit Date/Time","Branch","Stage",
+      "Mingles Refill","Mingles BO","Singles Refill","Singles BO","RTE Refill","RTE BO","Staff","Remarks"];
+    var rows=[head];
+    getLog().forEach(function(r){
+      rows.push([r.savedAt, fmtWhen(r.when), r.branch, r.stage,
+        r.mR, r.mB, r.sR, r.sB, r.rR, r.rB, r.staff, r.remarks]);
+    });
+    return "\uFEFF"+rows.map(function(row){ return row.map(csvCell).join(","); }).join("\r\n");
+  }
+  $("btnExport").addEventListener("click", function(){
+    if(!getLog().length){ toast("No records yet — save a visit first"); return; }
+    var blob=new Blob([toCSV()], {type:"text/csv;charset=utf-8"});
+    var d=new Date();
+    diskSave(blob, "TROPIKIND_records_"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+".csv");
+  });
+  $("btnClear").addEventListener("click", function(){
+    var n=getLog().length;
+    if(!n){ toast("Nothing to clear"); return; }
+    if(confirm("Delete all "+n+" saved records on this phone? This cannot be undone.")){
+      setLog([]); updateRecCount(); toast("Records cleared");
+    }
+  });
+  updateRecCount();
+
+  // show stamped image so the user can long-press → Save image (works in any Android browser)
+  var overlayURL=null;
+  function showImageOverlay(blob){
+    if(overlayURL){ URL.revokeObjectURL(overlayURL); }
+    overlayURL=URL.createObjectURL(blob);
+    $("resultImg").src=overlayURL;
+    $("imgOverlay").classList.add("show");
+  }
+  $("closeOverlay").addEventListener("click", function(){
+    $("imgOverlay").classList.remove("show");
+    if(overlayURL){ URL.revokeObjectURL(overlayURL); overlayURL=null; }
+  });
+  $("btnGallery").addEventListener("click", function(){
+    if(!hasImage){ toast("Add a photo first"); return; }
+    logVisit();
+    buildBlob(function(blob){ if(blob) showImageOverlay(blob); });
+  });
+
+  // Save to Photos: use the OS share sheet (tap “Save to Gallery”); fall back to long-press overlay
+  btnSave.addEventListener("click", function(){
+    if(!hasImage) return;
+    logVisit();
+    buildBlob(function(blob,name){
+      if(!blob){ toast("Couldn't build the image."); return; }
+      var f=null; try{ f=new File([blob],name,{type:"image/jpeg"}); }catch(e){}
+      if(f && navigator.canShare && navigator.canShare({files:[f]}) && navigator.share){
+        navigator.share({files:[f], title:"TropiKind", text: state.branch+" · "+state.stage})
+          .then(function(){ toast("Tap \u201CSave to Gallery\u201D in the sheet"); })
+          .catch(function(err){ if(!(err && err.name==="AbortError")) showImageOverlay(blob); });
+      } else {
+        showImageOverlay(blob);   // no share sheet → long-press to save
+      }
+    });
+  });
+
+  // Download file: straight to Downloads
+  btnDownload.addEventListener("click", function(){
+    if(!hasImage) return;
+    logVisit();
+    buildBlob(function(blob,name){
+      if(!blob){ toast("Couldn't build the image."); return; }
+      diskSave(blob,name);
+    });
+  });
+
+  function fallbackSave(blob,name){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1500);
+    toast("Saved ✓");
+  }
+
+  var toastT;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show");
+    clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},2200); }
+
+})();
+</script>
+<script>
+(function(){
+  // Register service worker (works on the hosted https site; harmless/no-op inside the Claude view)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+  var deferred=null, btn=document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferred=e; if(btn) btn.classList.remove('hidden');
+  });
+  if(btn){
+    btn.addEventListener('click', function(){
+      if(!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.then(function(){ deferred=null; btn.classList.add('hidden'); });
+    });
+  }
+  window.addEventListener('appinstalled', function(){ if(btn) btn.classList.add('hidden'); });
+})();
+</script>
+</body>
+</html>
