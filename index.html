@@ -265,13 +265,13 @@
       <span id="recCount">0 records saved</span>
       <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
     </div>
-    <div class="sync-status off" id="syncStatus">Cloud sync off — add your Google Sheet link</div>
+    <div class="sync-status off" id="syncStatus">Connecting to Tropikind Cam Delivery…</div>
     <div class="sync-cfg hidden" id="syncCfg">
-      <label>Google Sheet Web App URL</label>
+      <label>Built-in Google Sheet Web App URL</label>
       <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">
-      <label>Secret token (must match the script)</label>
+      <label>Sync token</label>
       <input type="text" id="syncTokIn" autocomplete="off" placeholder="e.g. tropikind2026">
-      <p class="hint">Paste the Web App URL you get after deploying the Apps Script to your sheet. The token is optional but recommended.</p>
+      <p class="hint">This endpoint is built into the Tropikind Camera app. Update the app files to change the destination.</p>
       <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
     </div>
     <div class="row">
@@ -725,20 +725,20 @@
   });
   updateRecCount();
 
-  // ---------- cloud sync (Google Sheet via Apps Script Web App) ----------
-  var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
-  var SYNC_CFG_VER_KEY="tk_sync_cfg_version";
+  // ---------- cloud sync (permanent Google Apps Script endpoint) ----------
+  // Updated: 2026-09-22
+  // Destination Google Sheet tab: "Tropikind Cam Delivery"
   var DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec";
   var DEFAULT_SYNC_TOKEN="tropikind2026";
-  var DEFAULT_SYNC_CFG_VERSION="2026-09-22-v2";
+  var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
+  var SYNC_CONFIG_VERSION_KEY="tk_sync_cfg_ver";
+  var SYNC_CONFIG_VERSION="cam-delivery-20260922-v1";
 
-  // Apply the built-in TropiKind endpoint once per config version.
-  // This updates existing phones from the previous endpoint, while still
-  // allowing Sync settings to be edited afterwards if ever needed.
-  if(LS.get(SYNC_CFG_VER_KEY,"")!==DEFAULT_SYNC_CFG_VERSION){
+  // Force this release to migrate every phone/browser to the new endpoint once.
+  if(LS.get(SYNC_CONFIG_VERSION_KEY,"")!==SYNC_CONFIG_VERSION){
     LS.set(SYNC_URL_KEY,DEFAULT_SYNC_URL);
     LS.set(SYNC_TOK_KEY,DEFAULT_SYNC_TOKEN);
-    LS.set(SYNC_CFG_VER_KEY,DEFAULT_SYNC_CFG_VERSION);
+    LS.set(SYNC_CONFIG_VERSION_KEY,SYNC_CONFIG_VERSION);
   }
 
   function deviceId(){
@@ -746,8 +746,10 @@
     if(!d){ d="ph-"+Math.random().toString(36).slice(2,7)+Date.now().toString(36).slice(-3); LS.set(DEV_KEY,d); }
     return d;
   }
-  function syncURL(){ return String(LS.get(SYNC_URL_KEY,DEFAULT_SYNC_URL)||DEFAULT_SYNC_URL).trim(); }
-  function syncTok(){ return String(LS.get(SYNC_TOK_KEY,DEFAULT_SYNC_TOKEN)||DEFAULT_SYNC_TOKEN).trim(); }
+
+  // Endpoint/token are built into this release. localStorage copies are retained for migration/debug visibility.
+  function syncURL(){ return DEFAULT_SYNC_URL; }
+  function syncTok(){ return DEFAULT_SYNC_TOKEN; }
   function pendingRecords(){ return getLog().filter(function(r){ return !r.synced; }); }
   function toSyncRecord(r){
     return { key:bizKey(r), savedAt:r.savedAt, when:fmtWhen(r.when),
@@ -756,58 +758,92 @@
   }
   function setSyncStatus(txt, cls){ var el=$("syncStatus"); if(el){ el.textContent=txt; el.className="sync-status "+cls; } }
   function updateSyncStatus(){
-    if(!syncURL()){ setSyncStatus("Cloud sync off — add your Google Sheet link","off"); return; }
     var log=getLog(), pend=log.filter(function(r){return !r.synced;}).length;
-    if(pend===0){ setSyncStatus((log.length?("All "+log.length+" synced to Google Sheet \u2713"):"Connected \u2014 no records yet"),"ok"); }
-    else { setSyncStatus(pend+" record"+(pend===1?"":"s")+" waiting"+(navigator.onLine?"":" (offline)"),"wait"); }
+    if(pend===0){
+      setSyncStatus(log.length ? ("All "+log.length+" synced to Tropikind Cam Delivery \u2713") : "Connected to Tropikind Cam Delivery \u2014 no records yet","ok");
+    } else {
+      setSyncStatus(pend+" record"+(pend===1?"":"s")+" waiting to sync"+(navigator.onLine?"":" (offline)"),"wait");
+    }
   }
+
   var syncing=false;
   function syncNow(manual){
     var url=syncURL();
-    if(!url){ if(manual) toast("Add your Google Sheet link in Sync settings first"); updateSyncStatus(); return; }
     if(syncing) return;
     var pend=pendingRecords();
     if(!pend.length){ if(manual) toast("Nothing to sync \u2014 all up to date"); updateSyncStatus(); return; }
     if(!navigator.onLine){ if(manual) toast("You're offline \u2014 it'll sync automatically when back online"); updateSyncStatus(); return; }
-    syncing=true; if(manual) setSyncStatus("Syncing "+pend.length+"\u2026","wait");
+
+    syncing=true;
+    setSyncStatus("Syncing "+pend.length+" record"+(pend.length===1?"":"s")+"\u2026","wait");
+
     var payload={ token:syncTok(), device:deviceId(), records:pend.map(toSyncRecord) };
-    fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) })
-      .then(function(res){ return res.json(); })
+
+    fetch(url, {
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload),
+      redirect:"follow"
+    })
+      .then(function(res){
+        return res.text().then(function(txt){
+          var data=null;
+          try{ data=JSON.parse(txt); }
+          catch(e){ throw new Error("Server returned non-JSON response (HTTP "+res.status+")"); }
+          if(!res.ok){ throw new Error((data&&data.error)||("HTTP "+res.status)); }
+          return data;
+        });
+      })
       .then(function(data){
         if(!data || !data.ok){ throw new Error((data&&data.error)||"server refused"); }
-        var done={}; (data.keys||[]).forEach(function(k){ done[k]=1; });
+
+        var done={};
+        (data.keys||[]).forEach(function(k){ done[k]=1; });
+
         var log=getLog(), now=new Date().toISOString(), cnt=0;
-        log.forEach(function(r){ if(done[bizKey(r)] && !r.synced){ r.synced=true; r.syncedAt=now; cnt++; } });
-        setLog(log); syncing=false; updateSyncStatus();
-        if(manual) toast(cnt?("Synced \u2713 ("+cnt+")"):"Already up to date");
+        log.forEach(function(r){
+          if(done[bizKey(r)] && !r.synced){
+            r.synced=true;
+            r.syncedAt=now;
+            cnt++;
+          }
+        });
+
+        setLog(log);
+        syncing=false;
+        updateSyncStatus();
+
+        if(manual){
+          toast(cnt ? ("Synced to Tropikind Cam Delivery \u2713 ("+cnt+")") : "Server connected \u2014 no new records marked");
+        }
       })
       .catch(function(err){
         syncing=false;
-        var m=(err&&err.message)?err.message:"check link / connection";
+        var m=(err&&err.message)?err.message:"check endpoint / deployment";
         setSyncStatus("Sync failed \u2014 "+m,"err");
         if(manual) toast("Sync failed: "+m);
       });
   }
-  // settings panel
-  $("syncUrlIn").value=syncURL(); $("syncTokIn").value=syncTok();
+
+  // Keep a read-only settings panel so the active endpoint can be checked on the phone.
+  $("syncUrlIn").value=syncURL();
+  $("syncTokIn").value="••••••••••••";
+  $("syncUrlIn").readOnly=true;
+  $("syncTokIn").readOnly=true;
+  $("saveSyncCfg").classList.add("hidden");
+
   $("btnSyncCfg").addEventListener("click", function(){
     var c=$("syncCfg"); var showing=!c.classList.toggle("hidden");
-    this.textContent = showing ? "Hide settings" : "Sync settings";
+    this.textContent = showing ? "Hide sync info" : "Sync info";
   });
-  $("saveSyncCfg").addEventListener("click", function(){
-    var u=$("syncUrlIn").value.trim();
-    if(u && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(u)){
-      if(!confirm("That doesn't look like an Apps Script Web App URL (should end in /exec). Save anyway?")) return;
-    }
-    LS.set(SYNC_URL_KEY,u); LS.set(SYNC_TOK_KEY,$("syncTokIn").value.trim());
-    $("syncCfg").classList.add("hidden"); $("btnSyncCfg").textContent="Sync settings";
-    toast("Sync settings saved"); updateSyncStatus(); syncNow(true);
-  });
+  $("btnSyncCfg").textContent="Sync info";
+
   $("btnSyncNow").addEventListener("click", function(){ syncNow(true); });
   window.addEventListener("online", function(){ updateSyncStatus(); syncNow(false); });
   window.addEventListener("offline", updateSyncStatus);
+
   updateSyncStatus();
-  setTimeout(function(){ syncNow(false); }, 1200);
+  setTimeout(function(){ syncNow(false); }, 1500);
 
   // show stamped image so the user can long-press → Save image (works in any Android browser)
   var overlayURL=null;
