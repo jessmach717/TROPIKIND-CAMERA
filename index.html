@@ -163,6 +163,13 @@
   .sync-cfg input{margin-bottom:2px}
   .sync-cfg .hint{font-size:10.5px;color:var(--muted);margin:5px 2px 0;line-height:1.45}
   button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
+  .gps-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:6px 9px;border-radius:8px;margin:0 2px;border:1px solid transparent}
+  .gps-badge.ok{color:#8ef0b0;background:rgba(51,194,107,.12);border-color:rgba(51,194,107,.32)}
+  .gps-badge.wait{color:#ffd08a;background:rgba(255,154,77,.12);border-color:rgba(255,154,77,.32)}
+  .gps-badge.err{color:#ffb0a4;background:rgba(255,90,72,.12);border-color:rgba(255,90,72,.34)}
+  .gps-perm-banner{background:rgba(255,154,77,.15);border:1px solid rgba(255,154,77,.4);border-radius:10px;padding:10px 12px;margin:0 0 11px;font-size:12px;line-height:1.5;color:var(--muted)}
+  .gps-perm-banner b{color:#ffd08a;font-weight:600}
+  .gps-perm-banner .hint{margin-top:6px;font-size:11px;color:rgba(255,255,255,.6)}
   .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
 </style>
 </head>
@@ -177,6 +184,10 @@
     </div>
     <button id="installBtn" class="install-btn hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>Install</button>
   </header>
+
+  <div class="gps-perm-banner hidden" id="gpsBanner">
+    <b>📍 Location Recording</b> — This app records GPS location with each photo for accurate field documentation. <span class="hint">Your location data stays on your device until you sync to Google Sheet.</span>
+  </div>
 
   <!-- Preview -->
   <div class="stage" id="stage">
@@ -193,6 +204,9 @@
     <button id="btnCam" class="gold icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take photo</button>
     <button id="btnUpload" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
     <button id="btnRetake" class="ghost hidden">Retake</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:9px 0;font-size:11px;color:var(--muted)">
+    <span>📍</span><span id="gpsBadge" class="gps-badge wait"><span id="gpsBadgeText">Locating…</span></span>
   </div>
   <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
   <input type="file" id="file" accept="image/*" class="hidden">
@@ -325,6 +339,43 @@
     staff: LS.get("tk_staff","Laydan")
   };
 
+  // ---------- GPS state ----------
+  var gpsState = { lat:null, lng:null, acc:null, time:null, locked:false };
+  var gpsPermAsked = LS.get("tk_gps_asked", false);
+
+  function updateGpsBadge(status, text, cls){
+    var badge=$("gpsBadge"), badgeText=$("gpsBadgeText");
+    if(badge && badgeText){ badgeText.textContent=text; badge.className="gps-badge "+cls; }
+  }
+  function requestGpsPermission(){
+    if(!navigator.geolocation){ updateGpsBadge("gps","GPS unavailable","err"); return; }
+    if(gpsPermAsked){ updateGpsBadge("gps","Locating…","wait"); requestGpsCapture(); return; }
+    $("gpsBanner").classList.remove("hidden");
+    LS.set("tk_gps_asked", true); gpsPermAsked=true;
+    setTimeout(requestGpsCapture, 300);
+  }
+  function requestGpsCapture(){
+    if(!navigator.geolocation){ updateGpsBadge("gps","GPS unavailable","err"); return; }
+    if(gpsState.locked) return;  // avoid concurrent requests
+    gpsState.locked=true;
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        gpsState.lat=pos.coords.latitude; gpsState.lng=pos.coords.longitude;
+        gpsState.acc=pos.coords.accuracy; gpsState.time=new Date().toISOString();
+        var accStr=Math.round(gpsState.acc)+"m";
+        var cls=(gpsState.acc<=3)?"ok":(gpsState.acc<=10)?"wait":"err";
+        updateGpsBadge("gps", accStr, cls); gpsState.locked=false;
+      },
+      function(err){
+        gpsState.locked=false;
+        if(err && err.code===1){ updateGpsBadge("gps","Permission denied","err"); }
+        else if(err && err.code===3){ updateGpsBadge("gps","Timeout","err"); }
+        else { updateGpsBadge("gps","Unavailable","err"); }
+      },
+      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+    );
+  }
+
   // ---------- populate selects ----------
   function fillSelect(sel, list, extraKey, current){
     var custom = LS.get(extraKey, []);
@@ -448,6 +499,7 @@
     preview.style.display="block"; btnRetake.classList.remove("hidden");
     btnSave.disabled=false; btnDownload.disabled=false;
     saveNote.textContent="Looks right? The stamp updates live. Tap save to keep it.";
+    requestGpsCapture();  // capture GPS at photo time
     draw();
   }
 
@@ -683,7 +735,8 @@
       mR:selSku("Mingles")?cval(counts.Mingles.refill):"", mB:selSku("Mingles")?cval(counts.Mingles.bo):"",
       sR:selSku("Singles")?cval(counts.Singles.refill):"", sB:selSku("Singles")?cval(counts.Singles.bo):"",
       rR:selSku("RTE")?cval(counts.RTE.refill):"", rB:selSku("RTE")?cval(counts.RTE.bo):"",
-      staff:state.staff||"", remarks:$("remarks").value.trim()
+      staff:state.staff||"", remarks:$("remarks").value.trim(),
+      lat:gpsState.lat||null, lng:gpsState.lng||null, acc:gpsState.acc||null, gpsTime:gpsState.time||null
     };
   }
   function bizKey(r){ return [r.when,r.branch,r.stage,r.mR,r.mB,r.sR,r.sB,r.rR,r.rB,r.staff,r.remarks].join("|"); }
@@ -701,11 +754,13 @@
   function csvCell(v){ v=(v==null?"":String(v)); return /[",\r\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
   function toCSV(){
     var head=["Saved At","Visit Date/Time","Branch","Stage",
-      "Mingles Refill","Mingles BO","Singles Refill","Singles BO","RTE Refill","RTE BO","Staff","Remarks"];
+      "Mingles Refill","Mingles BO","Singles Refill","Singles BO","RTE Refill","RTE BO","Staff","Remarks",
+      "Latitude","Longitude","GPS Accuracy (m)","GPS Capture Time"];
     var rows=[head];
     getLog().forEach(function(r){
       rows.push([r.savedAt, fmtWhen(r.when), r.branch, r.stage,
-        r.mR, r.mB, r.sR, r.sB, r.rR, r.rB, r.staff, r.remarks]);
+        r.mR, r.mB, r.sR, r.sB, r.rR, r.rB, r.staff, r.remarks,
+        r.lat||"", r.lng||"", r.acc||"", r.gpsTime||""]);
     });
     return "\uFEFF"+rows.map(function(row){ return row.map(csvCell).join(","); }).join("\r\n");
   }
@@ -724,6 +779,7 @@
     if(confirm(msg)){ setLog([]); updateRecCount(); updateSyncStatus(); toast("Local records cleared"); }
   });
   updateRecCount();
+  requestGpsPermission();  // ask for location on app load
 
   // ---------- cloud sync (permanent Google Apps Script endpoint) ----------
   // Updated: 2026-09-22
@@ -754,7 +810,8 @@
   function toSyncRecord(r){
     return { key:bizKey(r), savedAt:r.savedAt, when:fmtWhen(r.when),
       branch:r.branch, stage:r.stage, mR:r.mR, mB:r.mB, sR:r.sR, sB:r.sB, rR:r.rR, rB:r.rB,
-      staff:r.staff, remarks:r.remarks, device:r.device||deviceId() };
+      staff:r.staff, remarks:r.remarks, device:r.device||deviceId(),
+      lat:r.lat||null, lng:r.lng||null, acc:r.acc||null, gpsTime:r.gpsTime||null };
   }
   function setSyncStatus(txt, cls){ var el=$("syncStatus"); if(el){ el.textContent=txt; el.className="sync-status "+cls; } }
   function updateSyncStatus(){
