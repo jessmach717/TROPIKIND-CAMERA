@@ -132,7 +132,7 @@
   .media-actions label.ghost{display:grid!important;place-items:center}
   .media-actions .ghost:hover{border-color:rgba(115,183,255,.55)}
   .media-preview{margin-top:10px;width:100%;max-height:240px;border-radius:12px;background:#02060d}
-  .media-status{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+  .media-status{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}.media-status.ok{color:#8ef0b0}.media-status.wait{color:#ffd08a}.media-status.err{color:#ffb0a4}
   .media-file{display:none}
   .recording{border-color:rgba(255,86,72,.55)!important;color:#ffb0a4!important}
   .visit-save{width:100%;margin-top:12px;font-size:15px;padding:14px}
@@ -459,7 +459,69 @@
   function markMediaUploaded(id,result){return openMediaDB().then(function(db){return new Promise(function(resolve,reject){var tx=db.transaction(MEDIA_STORE,"readwrite"),st=tx.objectStore(MEDIA_STORE),req=st.get(id);req.onsuccess=function(){var x=req.result;if(!x)return;x.status="uploaded";x.fileUrl=result.fileUrl||"";x.folderUrl=result.folderUrl||"";x.fileId=result.fileId||"";st.put(x);};tx.oncomplete=function(){db.close();resolve();};tx.onerror=function(){db.close();reject(tx.error);};});});}
   function updateMediaStatus(){var a=[];if(voiceBlob)a.push("Voice ready");if(videoBlob)a.push("Video ready");$("mediaStatus").textContent=a.length?a.join(" · "):"No voice or video added.";}
   function stopVoiceRecording(){if(voiceRecorder&&voiceRecorder.state!=="inactive")voiceRecorder.stop();}
-  function startVoiceRecording(){if(!window.MediaRecorder||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast("Voice recording is not supported on this device/browser.");return;}navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){voiceStream=stream;var chunks=[];voiceRecorder=new MediaRecorder(stream);voiceMime=voiceRecorder.mimeType||"audio/webm";voiceRecorder.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};voiceRecorder.onstop=function(){if(voiceTimerInt){clearInterval(voiceTimerInt);voiceTimerInt=null;}if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop();});voiceStream=null;}voiceBlob=new Blob(chunks,{type:voiceMime});$("voicePlayback").src=URL.createObjectURL(voiceBlob);$("voicePlayback").classList.remove("hidden");$("btnVoiceRecord").classList.remove("recording");$("btnVoiceRecord").textContent="🎙 Re-record voice";$("btnVoiceStop").classList.add("hidden");updateMediaStatus();};voiceRecorder.start();voiceStartedAt=Date.now();$("btnVoiceRecord").classList.add("recording");$("btnVoiceRecord").textContent="Recording…";$("btnVoiceStop").classList.remove("hidden");voiceTimerInt=setInterval(function(){var ms=Math.min(MAX_VOICE_MS,Date.now()-voiceStartedAt),sec=Math.floor(ms/1000);$("voiceTimer").textContent=Math.floor(sec/60)+":"+pad(sec%60);if(ms>=MAX_VOICE_MS)stopVoiceRecording();},250);}).catch(function(){toast("Microphone permission is required.");});}
+  function bestAudioMime(){
+    if(!window.MediaRecorder || typeof MediaRecorder.isTypeSupported!=="function") return "";
+    var types=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"];
+    for(var i=0;i<types.length;i++){try{if(MediaRecorder.isTypeSupported(types[i]))return types[i];}catch(e){}}
+    return "";
+  }
+  function startVoiceRecording(){
+    if(!window.MediaRecorder||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      toast("Voice recording is not supported on this browser.");
+      $("mediaStatus").textContent="Voice unavailable on this browser.";
+      $("mediaStatus").className="media-status err";
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      voiceStream=stream;var chunks=[],chosen=bestAudioMime(),opts=chosen?{mimeType:chosen}:undefined;
+      try{voiceRecorder=opts?new MediaRecorder(stream,opts):new MediaRecorder(stream);}
+      catch(e){
+        stream.getTracks().forEach(function(t){t.stop();});
+        toast("Voice recorder could not start.");
+        $("mediaStatus").textContent="Voice recorder error: "+(e.message||"unsupported format");
+        $("mediaStatus").className="media-status err";
+        return;
+      }
+      voiceMime=voiceRecorder.mimeType||chosen||"audio/webm";
+      voiceRecorder.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+      voiceRecorder.onerror=function(e){
+        $("mediaStatus").textContent="Voice recording error. Photo/video can still be saved.";
+        $("mediaStatus").className="media-status err";
+      };
+      voiceRecorder.onstop=function(){
+        if(voiceTimerInt){clearInterval(voiceTimerInt);voiceTimerInt=null;}
+        if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop();});voiceStream=null;}
+        voiceBlob=new Blob(chunks,{type:voiceMime});
+        if(!voiceBlob.size){
+          voiceBlob=null;
+          $("mediaStatus").textContent="Voice was empty. Please record again.";
+          $("mediaStatus").className="media-status err";
+        }else{
+          $("voicePlayback").src=URL.createObjectURL(voiceBlob);
+          $("voicePlayback").classList.remove("hidden");
+          $("mediaStatus").textContent="Voice ready · "+Math.max(1,Math.round(voiceBlob.size/1024))+" KB";
+          $("mediaStatus").className="media-status ok";
+        }
+        $("btnVoiceRecord").classList.remove("recording");
+        $("btnVoiceRecord").textContent="🎙 Re-record voice";
+        $("btnVoiceStop").classList.add("hidden");
+      };
+      voiceRecorder.start(1000);voiceStartedAt=Date.now();
+      $("btnVoiceRecord").classList.add("recording");$("btnVoiceRecord").textContent="Recording…";
+      $("btnVoiceStop").classList.remove("hidden");
+      $("mediaStatus").textContent="Recording voice…";
+      $("mediaStatus").className="media-status wait";
+      voiceTimerInt=setInterval(function(){
+        var ms=Math.min(MAX_VOICE_MS,Date.now()-voiceStartedAt),sec=Math.floor(ms/1000);
+        $("voiceTimer").textContent=Math.floor(sec/60)+":"+pad(sec%60);
+        if(ms>=MAX_VOICE_MS)stopVoiceRecording();
+      },250);
+    }).catch(function(err){
+      toast("Microphone access failed.");
+      $("mediaStatus").textContent="Microphone error: "+((err&&err.message)||"permission/device problem");
+      $("mediaStatus").className="media-status err";
+    });
+  }
   $("btnVoiceRecord").addEventListener("click",startVoiceRecording);$("btnVoiceStop").addEventListener("click",stopVoiceRecording);
   function handleVideoSelected(f){if(!f)return;if(f.type&&f.type.indexOf("video/")!==0){toast("Please choose a video file.");return;}if(f.size>MAX_VIDEO_BYTES){toast("Video is too large. Keep it short (20 seconds maximum).");$("videoInput").value="";return;}var url=URL.createObjectURL(f),probe=document.createElement("video");probe.preload="metadata";probe.onloadedmetadata=function(){if(isFinite(probe.duration)&&probe.duration>MAX_VIDEO_SECONDS+.5){URL.revokeObjectURL(url);$("videoInput").value="";toast("Video must be 20 seconds or less.");return;}videoBlob=f;videoMime=f.type||"video/mp4";videoName=f.name||"inspection-video";$("videoPreview").src=url;$("videoPreview").classList.remove("hidden");updateMediaStatus();};probe.onerror=function(){URL.revokeObjectURL(url);toast("Couldn't read that video.");};probe.src=url;}
   $("videoInput").addEventListener("change",function(){handleVideoSelected(this.files&&this.files[0]);});$("btnClearMedia").addEventListener("click",function(){if(voiceRecorder&&voiceRecorder.state!=="inactive")stopVoiceRecording();voiceBlob=null;videoBlob=null;voiceMime="";videoMime="";videoName="";$("voicePlayback").removeAttribute("src");$("voicePlayback").classList.add("hidden");$("videoPreview").removeAttribute("src");$("videoPreview").classList.add("hidden");$("videoInput").value="";$("btnVoiceRecord").textContent="🎙 Record voice";updateMediaStatus();});updateMediaStatus();
@@ -702,6 +764,16 @@
     out.toBlob(function(blob){ cb(blob, filename()); }, "image/jpeg", 0.92);
   }
 
+  // Smaller stamped JPEG for Google Drive upload. Keeps mobile POST payload reliable.
+  function buildUploadPhotoBlob(cb){
+    if(!hasImage){cb(null,"");return;}
+    var maxSide=1600,scale=Math.min(1,maxSide/Math.max(base.width,base.height));
+    var w=Math.max(1,Math.round(base.width*scale)),h=Math.max(1,Math.round(base.height*scale));
+    var out=document.createElement("canvas");out.width=w;out.height=h;
+    var ctx=out.getContext("2d");ctx.drawImage(base,0,0,w,h);drawStamp(ctx,w,h);
+    out.toBlob(function(blob){cb(blob,filename());},"image/jpeg",0.78);
+  }
+
   // write to disk (Claude app save surface, else browser download)
   function diskSave(blob,name){
     if(claudeUse){
@@ -730,7 +802,7 @@
   function currentRecord(){return {savedAt:new Date().toISOString(),when:$("when").value||toLocalInput(new Date()),branch:state.branch||"",stage:state.stage,mR:selSku("Mingles")?cval(counts.Mingles.refill):"",mB:selSku("Mingles")?cval(counts.Mingles.bo):"",mT:selSku("Mingles")?cval(counts.Mingles.transfer):"",mTo:selSku("Mingles")?String(counts.Mingles.transferTo||""):"",sR:selSku("Singles")?cval(counts.Singles.refill):"",sB:selSku("Singles")?cval(counts.Singles.bo):"",sT:selSku("Singles")?cval(counts.Singles.transfer):"",sTo:selSku("Singles")?String(counts.Singles.transferTo||""):"",rR:selSku("RTE")?cval(counts.RTE.refill):"",rB:selSku("RTE")?cval(counts.RTE.bo):"",rT:selSku("RTE")?cval(counts.RTE.transfer):"",rTo:selSku("RTE")?String(counts.RTE.transferTo||""):"",staff:state.staff||"",remarks:$("remarks").value.trim(),inspectionNotes:$("inspectionNotes").value.trim(),hasVoice:!!voiceBlob,hasVideo:!!videoBlob,hasPhoto:!!hasImage};}
   function bizKey(r){return [r.when,r.branch,r.stage,r.mR,r.mB,r.mT,r.mTo,r.sR,r.sB,r.sT,r.sTo,r.rR,r.rB,r.rT,r.rTo,r.staff,r.remarks,r.inspectionNotes].join("|");}
   function validateTransfer(rec){var items=[["Mingles",rec.mT,rec.mTo],["Singles",rec.sT,rec.sTo],["RTE",rec.rT,rec.rTo]];for(var i=0;i<items.length;i++){if(Number(items[i][1])>0&&items[i][2]&&items[i][2]===rec.branch)return items[i][0]+": destination must be a different store.";}return "";}
-  function enqueueInspectionMedia(rec){var key=bizKey(rec),tasks=[];function add(type,blob,mime,name){if(!blob)return;tasks.push(saveMediaItem({id:key+"|"+type,cameraKey:key,mediaType:type,mimeType:mime||blob.type||"application/octet-stream",filename:name||type,blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}));}add("voice",voiceBlob,voiceMime,"voice.webm");add("video",videoBlob,videoMime,videoName||"video.mp4");if(hasImage){tasks.push(new Promise(function(resolve){buildBlob(function(blob,name){if(!blob){resolve();return;}saveMediaItem({id:key+"|photo",cameraKey:key,mediaType:"photo",mimeType:"image/jpeg",filename:name||"photo.jpg",blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}).then(resolve).catch(resolve);});}));}return Promise.all(tasks);}
+  function enqueueInspectionMedia(rec){var key=bizKey(rec),tasks=[];function add(type,blob,mime,name){if(!blob)return;tasks.push(saveMediaItem({id:key+"|"+type,cameraKey:key,mediaType:type,mimeType:mime||blob.type||"application/octet-stream",filename:name||type,blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}));}add("voice",voiceBlob,voiceMime,"voice.webm");add("video",videoBlob,videoMime,videoName||"video.mp4");if(hasImage){tasks.push(new Promise(function(resolve){buildUploadPhotoBlob(function(blob,name){if(!blob){resolve();return;}saveMediaItem({id:key+"|photo",cameraKey:key,mediaType:"photo",mimeType:"image/jpeg",filename:name||"photo.jpg",blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}).then(resolve).catch(resolve);});}));}return Promise.all(tasks);}
   function logVisit(showToast){var rec=currentRecord(),err=validateTransfer(rec);if(err){toast(err);return false;}var log=getLog();if(log.length&&bizKey(log[log.length-1])===bizKey(rec)){if(showToast)toast("Visit already saved.");syncNow(false);return true;}rec.device=deviceId();rec.synced=false;rec.syncedAt=null;rec.mediaPending=!!(rec.hasPhoto||rec.hasVoice||rec.hasVideo);log.push(rec);setLog(log);updateRecCount();updateSyncStatus();enqueueInspectionMedia(rec).then(function(){syncNow(false);});if(showToast)toast(navigator.onLine?"Visit saved — syncing…":"Visit saved offline.");return true;}
   $("btnLogVisit").addEventListener("click",function(){logVisit(true);});
   function updateRecCount(){
@@ -769,7 +841,7 @@
   var DEFAULT_SYNC_TOKEN="tropikind2026";
   var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
   var SYNC_CONFIG_VERSION_KEY="tk_sync_cfg_ver";
-  var SYNC_CONFIG_VERSION="cam-delivery-20260922-v1";
+  var SYNC_CONFIG_VERSION="cam-delivery-20260926-media-v2";
 
   // Force this release to migrate every phone/browser to the new endpoint once.
   if(LS.get(SYNC_CONFIG_VERSION_KEY,"")!==SYNC_CONFIG_VERSION){
@@ -804,15 +876,88 @@
 
   function blobToBase64(blob){return new Promise(function(resolve,reject){var fr=new FileReader();fr.onload=function(){var s=String(fr.result||""),p=s.indexOf(",");resolve(p>=0?s.slice(p+1):s);};fr.onerror=function(){reject(fr.error||new Error("Could not read media"));};fr.readAsDataURL(blob);});}
   function recordForKey(key){var log=getLog();for(var i=0;i<log.length;i++)if(bizKey(log[i])===key)return log[i];return null;}
-  function uploadMediaItem(item){var rec=recordForKey(item.cameraKey);if(!rec)return Promise.reject(new Error("Local visit record not found"));return blobToBase64(item.blob).then(function(b64){return fetch(syncURL(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},redirect:"follow",body:JSON.stringify({action:"uploadMedia",token:syncTok(),cameraKey:item.cameraKey,when:fmtWhen(rec.when),branch:rec.branch,stage:rec.stage,inspectionNotes:rec.inspectionNotes||"",mediaType:item.mediaType,mimeType:item.mimeType,filename:item.filename,data:b64})});}).then(function(res){return res.json();}).then(function(data){if(!data||!data.ok)throw new Error((data&&data.error)||"media upload failed");return markMediaUploaded(item.id,data).then(function(){return data;});});}
-  function syncPendingMedia(){if(!navigator.onLine)return Promise.resolve(0);return getAllPendingMedia().then(function(items){var chain=Promise.resolve(),done=0;items.forEach(function(item){chain=chain.then(function(){return uploadMediaItem(item).then(function(){done++;});});});return chain.then(function(){return done;});});}
+  function uploadMediaItem(item){
+    var rec=recordForKey(item.cameraKey);
+    if(!rec)return Promise.reject(new Error("Local visit record not found"));
+    return blobToBase64(item.blob).then(function(b64){
+      return fetch(syncURL(),{
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        redirect:"follow",
+        body:JSON.stringify({
+          action:"uploadMedia",token:syncTok(),cameraKey:item.cameraKey,
+          when:fmtWhen(rec.when),branch:rec.branch,stage:rec.stage,
+          inspectionNotes:rec.inspectionNotes||"",mediaType:item.mediaType,
+          mimeType:item.mimeType,filename:item.filename,data:b64
+        })
+      });
+    }).then(function(res){
+      return res.text().then(function(txt){
+        var data=null;
+        try{data=JSON.parse(txt);}catch(e){throw new Error("Media server returned non-JSON (HTTP "+res.status+")");}
+        if(!res.ok||!data||!data.ok)throw new Error((data&&data.error)||("Media HTTP "+res.status));
+        return data;
+      });
+    }).then(function(data){
+      return markMediaUploaded(item.id,data).then(function(){return data;});
+    });
+  }
+
+  function syncPendingMedia(manual){
+    if(!navigator.onLine)return Promise.resolve({ok:0,failed:0,errors:[]});
+    return getAllPendingMedia().then(function(items){
+      // Photo first so a voice/video problem never blocks the photo link.
+      var order={photo:0,voice:1,video:2};
+      items.sort(function(a,b){return (order[a.mediaType]||9)-(order[b.mediaType]||9);});
+      var chain=Promise.resolve(),ok=0,failed=0,errors=[];
+      items.forEach(function(item){
+        chain=chain.then(function(){
+          $("mediaStatus").textContent="Uploading "+item.mediaType+"…";
+          $("mediaStatus").className="media-status wait";
+          return uploadMediaItem(item).then(function(){
+            ok++;
+          }).catch(function(err){
+            failed++;
+            errors.push(item.mediaType+": "+((err&&err.message)||"upload failed"));
+            // Keep this item pending for Sync Now / next online retry.
+          });
+        });
+      });
+      return chain.then(function(){
+        if(failed){
+          $("mediaStatus").textContent=(ok?ok+" uploaded · ":"")+failed+" pending — "+errors[0];
+          $("mediaStatus").className="media-status err";
+        }else if(ok){
+          $("mediaStatus").textContent=ok+" media uploaded to Google Drive ✓";
+          $("mediaStatus").className="media-status ok";
+        }
+        return {ok:ok,failed:failed,errors:errors};
+      });
+    });
+  }
 
   var syncing=false;
   function syncNow(manual){
     var url=syncURL();
     if(syncing) return;
     var pend=pendingRecords();
-    if(!pend.length){ if(manual) toast("Nothing to sync \u2014 all up to date"); updateSyncStatus(); return; }
+    if(!pend.length){
+      if(!navigator.onLine){if(manual)toast("You're offline — media will retry when online");updateSyncStatus();return;}
+      syncing=true;
+      setSyncStatus("Checking pending media…","wait");
+      syncPendingMedia(manual).then(function(result){
+        syncing=false;updateSyncStatus();
+        if(manual){
+          if(result.failed)toast("Media pending: "+result.errors[0]);
+          else if(result.ok)toast("Media uploaded ✓ ("+result.ok+")");
+          else toast("Everything is up to date ✓");
+        }
+      }).catch(function(err){
+        syncing=false;setSyncStatus("Media sync failed — "+(err.message||"retry"),"err");
+        if(manual)toast("Media sync failed: "+(err.message||"retry"));
+      });
+      return;
+    }
     if(!navigator.onLine){ if(manual) toast("You're offline \u2014 it'll sync automatically when back online"); updateSyncStatus(); return; }
 
     syncing=true;
@@ -851,9 +996,14 @@
         });
 
         setLog(log);
-        return syncPendingMedia().then(function(mediaCount){
+        return syncPendingMedia(manual).then(function(mediaResult){
           syncing=false;updateSyncStatus();
-          if(manual){var msg=cnt?("Synced visits ✓ ("+cnt+")"):"Visit data up to date";if(mediaCount)msg+=" · media "+mediaCount;toast(msg);}
+          if(manual){
+            var msg=cnt?("Synced visits ✓ ("+cnt+")"):"Visit data up to date";
+            if(mediaResult.ok)msg+=" · media "+mediaResult.ok;
+            if(mediaResult.failed)msg+=" · "+mediaResult.failed+" media pending";
+            toast(msg);
+          }
         });
       })
       .catch(function(err){

@@ -64,3 +64,16 @@ UI refinements:
 
 Transfer behavior remains unchanged from v2.1:
 - `Transfer To` is optional.
+
+
+## v2.3 — Media sync reliability patch
+
+- Pending media retries even after visit rows are already synced.
+- Photo uploads first, so a voice/video error cannot block Photo Link.
+- Photo upload copy is resized/compressed for reliable mobile upload.
+- Voice recorder auto-detects a supported MIME type.
+- Media failures are isolated per file and remain pending for retry.
+- Sync Now retries pending media.
+- Service worker cache bumped to v8.
+
+No Google Sheet structure change is required for this patch.
