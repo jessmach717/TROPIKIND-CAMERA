@@ -188,22 +188,51 @@
 
   /* ---------- Full-page CSV viewer ---------- */
   .csv-page{
-    position:fixed;inset:0;z-index:100;background:var(--bg);color:var(--white);
+    position:fixed;inset:0;z-index:100;background:#06101f;color:var(--white);
     display:none;overflow:auto;padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 18px);
   }
   .csv-page.show{display:block}
+  .csv-shell{max-width:1500px;margin:0 auto}
   .csv-head{
-    position:sticky;top:0;z-index:2;background:rgba(6,16,31,.96);
-    backdrop-filter:blur(10px);padding:10px 0 12px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:5;background:rgba(6,16,31,.97);
+    backdrop-filter:blur(12px);padding:10px 0 12px;border-bottom:1px solid var(--line);
   }
-  .csv-head .bar{display:flex;gap:10px;align-items:center}
-  .csv-head h2{margin:0;font-size:18px;flex:1}
-  .csv-wrap{overflow:auto;margin-top:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px}
-  .csv-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:12px;background:#081525}
-  .csv-table th,.csv-table td{border:1px solid rgba(255,255,255,.08);padding:8px 9px;white-space:nowrap;text-align:left}
-  .csv-table th{position:sticky;top:62px;background:#0e2545;color:var(--gold-soft);z-index:1}
-  .csv-empty{padding:28px;text-align:center;color:var(--muted)}
-
+  .csv-head .bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .csv-head h2{margin:0;font-size:18px;flex:1;min-width:170px}
+  .csv-sub{font-size:11px;color:var(--muted);margin-top:7px}
+  .csv-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+  .csv-stat{background:#0a1929;border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:10px}
+  .csv-stat b{display:block;font-size:18px;color:var(--gold-soft)}
+  .csv-stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .csv-tools{display:flex;gap:8px;align-items:center;margin:10px 0}
+  .csv-tools input{min-width:0;flex:1}
+  .csv-wrap{
+    overflow:auto;max-height:calc(100dvh - 220px);
+    border:1px solid rgba(255,255,255,.10);border-radius:12px;background:#081525;
+    box-shadow:0 12px 30px rgba(0,0,0,.25)
+  }
+  .csv-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12px}
+  .csv-table th,.csv-table td{
+    border-right:1px solid rgba(255,255,255,.07);
+    border-bottom:1px solid rgba(255,255,255,.07);
+    padding:9px 10px;white-space:nowrap;text-align:left;vertical-align:top
+  }
+  .csv-table th{
+    position:sticky;top:0;background:#0e2545;color:var(--gold-soft);z-index:3;
+    font-size:11px;text-transform:uppercase;letter-spacing:.03em
+  }
+  .csv-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+  .csv-table tbody tr:hover td{background:rgba(224,177,58,.05)}
+  .csv-table td:first-child,.csv-table th:first-child{position:sticky;left:0;z-index:2;background:#0a1929}
+  .csv-table th:first-child{z-index:4;background:#0e2545}
+  .csv-empty{padding:38px 22px;text-align:center;color:var(--muted)}
+  .csv-count{font-size:11px;color:var(--muted);white-space:nowrap}
+  @media(max-width:600px){
+    .csv-summary{grid-template-columns:repeat(3,1fr)}
+    .csv-stat{padding:8px}.csv-stat b{font-size:15px}
+    .csv-head .bar button{padding:10px 11px}
+    .csv-wrap{max-height:calc(100dvh - 235px)}
+  }
 </style>
 </head>
 <body>
@@ -350,16 +379,28 @@
 
 
 <div class="csv-page" id="csvPage">
-  <div class="csv-head">
-    <div class="bar">
-      <button type="button" class="ghost" id="btnCsvBack">← Main</button>
-      <h2>Saved Visit Records</h2>
-      <button type="button" class="ghost" id="btnCsvDownload">Download CSV</button>
+  <div class="csv-shell">
+    <div class="csv-head">
+      <div class="bar">
+        <button type="button" class="ghost" id="btnCsvBack">← Main</button>
+        <h2>Saved Visit Records</h2>
+        <span class="csv-count" id="csvCount"></span>
+        <button type="button" class="ghost" id="btnCsvDownload">Download CSV</button>
+      </div>
+      <div class="csv-sub">This view uses the exact same CSV data as the Download CSV file.</div>
     </div>
+    <div class="csv-summary">
+      <div class="csv-stat"><b id="csvTotal">0</b><span>Records</span></div>
+      <div class="csv-stat"><b id="csvStores">0</b><span>Stores</span></div>
+      <div class="csv-stat"><b id="csvStages">0</b><span>Stages</span></div>
+    </div>
+    <div class="csv-tools">
+      <input type="text" id="csvSearch" placeholder="Search branch, stage, staff, remarks…">
+      <button type="button" class="ghost" id="btnCsvClearSearch">Clear</button>
+    </div>
+    <div class="csv-wrap" id="csvWrap"></div>
   </div>
-  <div class="csv-wrap" id="csvWrap"></div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -855,35 +896,101 @@
     });
   }
 
-  function csvRowsForView(){
-    var head=["Saved At","Visit Date/Time","Branch","Stage","Mingles Refill","Mingles BO","Mingles Transfer","Mingles Transfer To","Singles Refill","Singles BO","Singles Transfer","Singles Transfer To","RTE Refill","RTE BO","RTE Transfer","RTE Transfer To","Staff","Remarks","Inspection Notes"];
-    var rows=[head];
-    getLog().forEach(function(r){
-      rows.push([r.savedAt,fmtWhen(r.when),r.branch,r.stage,r.mR,r.mB,r.mT||"",r.mTo||"",r.sR,r.sB,r.sT||"",r.sTo||"",r.rR,r.rB,r.rT||"",r.rTo||"",r.staff,r.remarks,r.inspectionNotes||""]);
-    });
+  // Parse the exact text produced by toCSV().
+  // This guarantees the screen view and downloaded CSV contain the same data.
+  function parseCSVText(text){
+    text=String(text||"").replace(/^\uFEFF/,"");
+    var rows=[],row=[],cell="",quoted=false;
+    for(var i=0;i<text.length;i++){
+      var ch=text[i],next=text[i+1];
+      if(quoted){
+        if(ch==='"' && next==='"'){cell+='"';i++;}
+        else if(ch==='"'){quoted=false;}
+        else{cell+=ch;}
+      }else{
+        if(ch==='"'){quoted=true;}
+        else if(ch===','){row.push(cell);cell="";}
+        else if(ch==='\r' && next==='\n'){row.push(cell);rows.push(row);row=[];cell="";i++;}
+        else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell="";}
+        else{cell+=ch;}
+      }
+    }
+    if(cell!==""||row.length){row.push(cell);rows.push(row);}
     return rows;
   }
 
-  function showCsvPage(){
-    var log=getLog();
+  var csvViewRows=[];
+
+  function renderCsvTable(filterText){
     var wrap=$("csvWrap");
-    if(!log.length){
+    if(!csvViewRows.length || csvViewRows.length===1){
       wrap.innerHTML='<div class="csv-empty">No saved visit records yet.</div>';
-    }else{
-      var rows=csvRowsForView();
-      var out='<table class="csv-table"><thead><tr>';
-      rows[0].forEach(function(v){out+='<th>'+escapeCell(v)+'</th>';});
-      out+='</tr></thead><tbody>';
-      for(var i=1;i<rows.length;i++){
-        out+='<tr>';
-        rows[i].forEach(function(v){out+='<td>'+escapeCell(v)+'</td>';});
-        out+='</tr>';
-      }
-      out+='</tbody></table>';
-      wrap.innerHTML=out;
+      $("csvCount").textContent="0 rows";
+      return;
     }
+
+    var head=csvViewRows[0];
+    var body=csvViewRows.slice(1);
+    var q=String(filterText||"").trim().toLowerCase();
+
+    if(q){
+      body=body.filter(function(row){
+        return row.join(" ").toLowerCase().indexOf(q)>=0;
+      });
+    }
+
+    $("csvCount").textContent=body.length+" of "+(csvViewRows.length-1)+" rows";
+
+    var out='<table class="csv-table"><thead><tr>';
+    head.forEach(function(v){out+='<th>'+escapeCell(v)+'</th>';});
+    out+='</tr></thead><tbody>';
+
+    body.forEach(function(row){
+      out+='<tr>';
+      for(var c=0;c<head.length;c++){
+        out+='<td>'+escapeCell(row[c]||"")+'</td>';
+      }
+      out+='</tr>';
+    });
+
+    out+='</tbody></table>';
+    wrap.innerHTML=out;
+  }
+
+  function updateCsvSummary(){
+    if(csvViewRows.length<=1){
+      $("csvTotal").textContent="0";
+      $("csvStores").textContent="0";
+      $("csvStages").textContent="0";
+      return;
+    }
+    var head=csvViewRows[0];
+    var body=csvViewRows.slice(1);
+    var branchIndex=head.indexOf("Branch");
+    var stageIndex=head.indexOf("Stage");
+    var stores={},stages={};
+
+    body.forEach(function(row){
+      var b=branchIndex>=0?String(row[branchIndex]||"").trim():"";
+      var s=stageIndex>=0?String(row[stageIndex]||"").trim():"";
+      if(b)stores[b]=1;
+      if(s)stages[s]=1;
+    });
+
+    $("csvTotal").textContent=body.length;
+    $("csvStores").textContent=Object.keys(stores).length;
+    $("csvStages").textContent=Object.keys(stages).length;
+  }
+
+  function showCsvPage(){
+    var csvText=toCSV();
+    csvViewRows=parseCSVText(csvText);
+    $("csvSearch").value="";
+    updateCsvSummary();
+    renderCsvTable("");
     $("csvPage").classList.add("show");
     document.body.style.overflow="hidden";
+    $("csvPage").scrollTop=0;
   }
 
   function hideCsvPage(){
@@ -891,18 +998,28 @@
     document.body.style.overflow="";
   }
 
-  $("btnExport").addEventListener("click", function(){
-    showCsvPage();
+  $("btnExport").addEventListener("click",showCsvPage);
+  $("btnCsvBack").addEventListener("click",hideCsvPage);
+
+  $("csvSearch").addEventListener("input",function(){
+    renderCsvTable(this.value);
   });
 
-  $("btnCsvBack").addEventListener("click", hideCsvPage);
+  $("btnCsvClearSearch").addEventListener("click",function(){
+    $("csvSearch").value="";
+    renderCsvTable("");
+    $("csvSearch").focus();
+  });
 
   $("btnCsvDownload").addEventListener("click", function(){
-    if(!getLog().length){ toast("No records yet"); return; }
-    var blob=new Blob([toCSV()], {type:"text/csv;charset=utf-8"});
+    var csvText=toCSV();
+    var rows=parseCSVText(csvText);
+    if(rows.length<=1){toast("No records yet");return;}
+    var blob=new Blob([csvText], {type:"text/csv;charset=utf-8"});
     var d=new Date();
     diskSave(blob, "TROPIKIND_records_"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+".csv");
   });
+
   $("btnClear").addEventListener("click", function(){
     var n=getLog().length;
     if(!n){ toast("Nothing to clear"); return; }
