@@ -119,6 +119,21 @@
   .sku-row input{width:100%;font-size:30px;font-weight:800;text-align:center;padding:12px 4px;background:#081525;border:1px solid rgba(255,255,255,.1);border-radius:11px;color:#fff}
   .sku-row input.rf{color:#5be08a}
   .sku-row input.boc{color:#ff9a4d}
+  .sku-row input.trc{color:#73b7ff}
+  .transfer-dest{margin:7px 0 12px 94px;padding:10px 11px;border:1px solid rgba(115,183,255,.25);border-radius:11px;background:rgba(115,183,255,.07)}
+  .transfer-dest label{font-size:10px;color:#a8d4ff;margin:0 0 5px 2px}
+  .transfer-dest select{width:100%}
+  .inspection-panel{border-color:rgba(115,183,255,.25);background:linear-gradient(180deg,rgba(115,183,255,.07),rgba(255,255,255,.02))}
+  .inspection-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .inspection-title b{font-size:15px}
+  .inspection-badge{font-size:10px;font-weight:800;letter-spacing:.06em;color:#06101f;background:#73b7ff;padding:5px 8px;border-radius:999px}
+  .media-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+  .media-preview{margin-top:10px;width:100%;max-height:240px;border-radius:12px;background:#02060d}
+  .media-status{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+  .media-file{display:none}
+  .recording{border-color:rgba(255,86,72,.55)!important;color:#ffb0a4!important}
+  .visit-save{width:100%;margin-top:12px;font-size:15px;padding:14px}
+  @media(max-width:430px){.sku-row{display:grid;grid-template-columns:72px repeat(3,1fr);gap:6px}.sku-row .nm{flex:none}.sku-row input{font-size:23px;padding:10px 3px}.transfer-dest{margin-left:0}}
   .sku-row input::placeholder{color:rgba(255,255,255,.26);font-weight:800}
   .inline{display:flex;gap:8px;align-items:stretch}
   .inline input{flex:1}
@@ -130,6 +145,7 @@
   .seg button[aria-pressed="true"]{color:#06101f}
   .seg button[data-v="BEFORE"][aria-pressed="true"]{background:var(--amber)}
   .seg button[data-v="AFTER"][aria-pressed="true"]{background:var(--green)}
+  .seg button[data-v="INSPECTION"][aria-pressed="true"]{background:#73b7ff}
   .seg.multi button[aria-pressed="true"]{background:var(--gold);color:#06101f}
 
   .linkbtn{background:none;border:none;color:var(--gold-soft);font-size:12px;padding:8px 2px 0;width:auto;cursor:pointer;font-weight:600}
@@ -163,13 +179,6 @@
   .sync-cfg input{margin-bottom:2px}
   .sync-cfg .hint{font-size:10.5px;color:var(--muted);margin:5px 2px 0;line-height:1.45}
   button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
-  .gps-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:6px 9px;border-radius:8px;margin:0 2px;border:1px solid transparent}
-  .gps-badge.ok{color:#8ef0b0;background:rgba(51,194,107,.12);border-color:rgba(51,194,107,.32)}
-  .gps-badge.wait{color:#ffd08a;background:rgba(255,154,77,.12);border-color:rgba(255,154,77,.32)}
-  .gps-badge.err{color:#ffb0a4;background:rgba(255,90,72,.12);border-color:rgba(255,90,72,.34)}
-  .gps-perm-banner{background:rgba(255,154,77,.15);border:1px solid rgba(255,154,77,.4);border-radius:10px;padding:10px 12px;margin:0 0 11px;font-size:12px;line-height:1.5;color:var(--muted)}
-  .gps-perm-banner b{color:#ffd08a;font-weight:600}
-  .gps-perm-banner .hint{margin-top:6px;font-size:11px;color:rgba(255,255,255,.6)}
   .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
 </style>
 </head>
@@ -184,10 +193,6 @@
     </div>
     <button id="installBtn" class="install-btn hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>Install</button>
   </header>
-
-  <div class="gps-perm-banner hidden" id="gpsBanner">
-    <b>📍 Location Recording</b> — This app records GPS location with each photo for accurate field documentation. <span class="hint">Your location data stays on your device until you sync to Google Sheet.</span>
-  </div>
 
   <!-- Preview -->
   <div class="stage" id="stage">
@@ -205,9 +210,6 @@
     <button id="btnUpload" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
     <button id="btnRetake" class="ghost hidden">Retake</button>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;padding:9px 0;font-size:11px;color:var(--muted)">
-    <span>📍</span><span id="gpsBadge" class="gps-badge wait"><span id="gpsBadgeText">Locating…</span></span>
-  </div>
   <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
   <input type="file" id="file" accept="image/*" class="hidden">
 
@@ -218,6 +220,7 @@
       <div class="seg" id="seg">
         <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
         <button data-v="AFTER" aria-pressed="true">AFTER</button>
+        <button data-v="INSPECTION" aria-pressed="false">INSPECTION</button>
       </div>
     </div>
 
@@ -231,7 +234,7 @@
     </div>
 
     <div class="field" id="skuCountsField">
-      <label>Refill &amp; BO — per product</label>
+      <label>Product movement — Refill, BO &amp; Transfer</label>
       <div id="skuCounts"></div>
     </div>
 
@@ -261,9 +264,26 @@
 
     <div class="field">
       <label for="remarks">Remarks (optional)</label>
-      <textarea id="remarks" placeholder="e.g. defects removed, display re-fronted"></textarea>
+      <textarea id="remarks" placeholder="e.g. display condition, action taken"></textarea>
     </div>
   </div>
+
+  <div class="panel inspection-panel hidden" id="inspectionPanel">
+    <div class="inspection-title"><b>Inspection documentation</b><span class="inspection-badge">INSPECTION</span></div>
+    <div class="field"><label for="inspectionNotes">Inspection notes</label><textarea id="inspectionNotes" placeholder="Store condition, product observation, issue, action needed..."></textarea></div>
+    <div class="media-actions">
+      <button type="button" class="ghost" id="btnVoiceRecord">🎙 Record voice</button>
+      <button type="button" class="ghost hidden" id="btnVoiceStop">■ Stop <span id="voiceTimer">0:00</span></button>
+      <label class="ghost" for="videoInput" style="display:grid;place-items:center;cursor:pointer">🎥 Capture video</label>
+      <button type="button" class="ghost" id="btnClearMedia">Clear media</button>
+    </div>
+    <audio id="voicePlayback" class="media-preview hidden" controls></audio>
+    <input class="media-file" type="file" id="videoInput" accept="video/*" capture="environment">
+    <video id="videoPreview" class="media-preview hidden" controls playsinline></video>
+    <div class="media-status" id="mediaStatus">No voice or video added.</div>
+  </div>
+
+  <button type="button" class="gold visit-save" id="btnLogVisit">Save Visit</button>
 
   <div class="row">
     <button id="btnSave" class="gold" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save to Photos</button>
@@ -339,43 +359,6 @@
     staff: LS.get("tk_staff","Laydan")
   };
 
-  // ---------- GPS state ----------
-  var gpsState = { lat:null, lng:null, acc:null, time:null, locked:false };
-  var gpsPermAsked = LS.get("tk_gps_asked", false);
-
-  function updateGpsBadge(status, text, cls){
-    var badge=$("gpsBadge"), badgeText=$("gpsBadgeText");
-    if(badge && badgeText){ badgeText.textContent=text; badge.className="gps-badge "+cls; }
-  }
-  function requestGpsPermission(){
-    if(!navigator.geolocation){ updateGpsBadge("gps","GPS unavailable","err"); return; }
-    if(gpsPermAsked){ updateGpsBadge("gps","Locating…","wait"); requestGpsCapture(); return; }
-    $("gpsBanner").classList.remove("hidden");
-    LS.set("tk_gps_asked", true); gpsPermAsked=true;
-    setTimeout(requestGpsCapture, 300);
-  }
-  function requestGpsCapture(){
-    if(!navigator.geolocation){ updateGpsBadge("gps","GPS unavailable","err"); return; }
-    if(gpsState.locked) return;  // avoid concurrent requests
-    gpsState.locked=true;
-    navigator.geolocation.getCurrentPosition(
-      function(pos){
-        gpsState.lat=pos.coords.latitude; gpsState.lng=pos.coords.longitude;
-        gpsState.acc=pos.coords.accuracy; gpsState.time=new Date().toISOString();
-        var accStr=Math.round(gpsState.acc)+"m";
-        var cls=(gpsState.acc<=3)?"ok":(gpsState.acc<=10)?"wait":"err";
-        updateGpsBadge("gps", accStr, cls); gpsState.locked=false;
-      },
-      function(err){
-        gpsState.locked=false;
-        if(err && err.code===1){ updateGpsBadge("gps","Permission denied","err"); }
-        else if(err && err.code===3){ updateGpsBadge("gps","Timeout","err"); }
-        else { updateGpsBadge("gps","Unavailable","err"); }
-      },
-      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
-    );
-  }
-
   // ---------- populate selects ----------
   function fillSelect(sel, list, extraKey, current){
     var custom = LS.get(extraKey, []);
@@ -389,7 +372,7 @@
   fillSelect($("branch"), BRANCHES, "tk_custom_branch", state.branch);
   fillSelect($("staff"), STAFF, "tk_custom_staff", state.staff);
 
-  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); draw(); });
+  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); renderSkuCounts(); draw(); });
   $("staff").addEventListener("change",function(){ state.staff=this.value; LS.set("tk_staff",state.staff); draw(); });
 
   $("addBranch").addEventListener("click",function(){
@@ -405,12 +388,14 @@
 
   // ---------- stage toggle ----------
   var seg=$("seg");
+  function renderStageUI(){ var inspection=state.stage==="INSPECTION"; $("inspectionPanel").classList.toggle("hidden",!inspection); }
   function setStage(v){
+    if(["BEFORE","AFTER","INSPECTION"].indexOf(v)<0) v="AFTER";
     state.stage=v; LS.set("tk_stage",v);
     Array.prototype.forEach.call(seg.querySelectorAll("button"),function(b){
       b.setAttribute("aria-pressed", b.dataset.v===v ? "true":"false");
     });
-    draw();
+    renderStageUI(); draw();
   }
   seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(b) setStage(b.dataset.v); });
   setStage(state.stage);
@@ -430,25 +415,20 @@
     LS.set("tk_prod", prodSel); renderProd(); renderSkuCounts(); draw();
   });
 
-  // per-SKU Refill / BO (per-visit, not persisted)
-  var counts={Mingles:{refill:"",bo:""},Singles:{refill:"",bo:""},RTE:{refill:"",bo:""}};
-  var ORDER=["Mingles","Singles","RTE"];
-  var skuBox=$("skuCounts"), skuField=$("skuCountsField");
+  // per-SKU Refill / BO / Transfer
+  var counts={Mingles:{refill:"",bo:"",transfer:"",transferTo:""},Singles:{refill:"",bo:"",transfer:"",transferTo:""},RTE:{refill:"",bo:"",transfer:"",transferTo:""}};
+  var ORDER=["Mingles","Singles","RTE"], skuBox=$("skuCounts"), skuField=$("skuCountsField");
+  function escHtml(v){return String(v||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function allBranches(){var custom=LS.get("tk_custom_branch",[]);return BRANCHES.concat(custom.filter(function(x){return BRANCHES.indexOf(x)<0;}));}
+  function transferOptions(selected){return '<option value="">Not assigned yet</option>'+allBranches().filter(function(b){return b!==state.branch;}).map(function(b){return '<option value="'+escHtml(b)+'"'+(b===selected?' selected':'')+'>'+escHtml(b)+'</option>';}).join("");}
   function renderSkuCounts(){
-    var active=ORDER.filter(function(s){ return prodSel.indexOf(s)>=0; });
-    skuBox.innerHTML="";
-    if(!active.length){ skuField.style.display="none"; return; }
-    skuField.style.display="";
+    var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});skuBox.innerHTML="";if(!active.length){skuField.style.display="none";return;}skuField.style.display="";
     active.forEach(function(s){
-      var row=document.createElement("div"); row.className="sku-row";
-      row.innerHTML='<div class="nm">'+s+'</div>'+
-        '<div class="cell"><small>Refill</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="rf"></div>'+
-        '<div class="cell"><small>BO</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="boc"></div>';
-      var ins=row.querySelectorAll("input");
-      ins[0].value=counts[s].refill; ins[1].value=counts[s].bo;
-      ins[0].addEventListener("input",function(){ counts[s].refill=this.value; draw(); });
-      ins[1].addEventListener("input",function(){ counts[s].bo=this.value; draw(); });
-      skuBox.appendChild(row);
+      var wrap=document.createElement("div"),row=document.createElement("div");row.className="sku-row";
+      row.innerHTML='<div class="nm">'+s+'</div><div class="cell"><small>Refill</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="rf"></div><div class="cell"><small>BO</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="boc"></div><div class="cell"><small>Transfer</small><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="trc"></div>';wrap.appendChild(row);
+      var dest=document.createElement("div");dest.className="transfer-dest"+((Number(counts[s].transfer)||0)>0?"":" hidden");dest.innerHTML='<label>Transfer To <span style="opacity:.7">(optional)</span></label><select class="trto">'+transferOptions(counts[s].transferTo)+'</select>';wrap.appendChild(dest);
+      var ins=row.querySelectorAll("input");ins[0].value=counts[s].refill;ins[1].value=counts[s].bo;ins[2].value=counts[s].transfer;
+      ins[0].addEventListener("input",function(){counts[s].refill=this.value;draw();});ins[1].addEventListener("input",function(){counts[s].bo=this.value;draw();});ins[2].addEventListener("input",function(){counts[s].transfer=this.value;dest.classList.toggle("hidden",!(Number(this.value)>0));if(!(Number(this.value)>0))counts[s].transferTo="";draw();});dest.querySelector("select").addEventListener("change",function(){counts[s].transferTo=this.value;});skuBox.appendChild(wrap);
     });
   }
   renderProd(); renderSkuCounts();
@@ -462,6 +442,18 @@
   setNow();
 
   $("remarks").addEventListener("input", draw);
+  var voiceBlob=null,voiceMime="",voiceRecorder=null,voiceStream=null,voiceStartedAt=0,voiceTimerInt=null,videoBlob=null,videoMime="",videoName="";
+  var MAX_VOICE_MS=60000,MAX_VIDEO_SECONDS=20,MAX_VIDEO_BYTES=15*1024*1024,MEDIA_DB="TropikindInspectionMedia",MEDIA_STORE="mediaQueue";
+  function openMediaDB(){return new Promise(function(resolve,reject){if(!window.indexedDB){reject(new Error("Offline media storage is not supported."));return;}var req=indexedDB.open(MEDIA_DB,1);req.onupgradeneeded=function(){var db=req.result;if(!db.objectStoreNames.contains(MEDIA_STORE)){var st=db.createObjectStore(MEDIA_STORE,{keyPath:"id"});st.createIndex("cameraKey","cameraKey",{unique:false});st.createIndex("status","status",{unique:false});}};req.onsuccess=function(){resolve(req.result);};req.onerror=function(){reject(req.error||new Error("Could not open media storage"));};});}
+  function saveMediaItem(item){return openMediaDB().then(function(db){return new Promise(function(resolve,reject){var tx=db.transaction(MEDIA_STORE,"readwrite");tx.objectStore(MEDIA_STORE).put(item);tx.oncomplete=function(){db.close();resolve();};tx.onerror=function(){db.close();reject(tx.error);};});});}
+  function getAllPendingMedia(){return openMediaDB().then(function(db){return new Promise(function(resolve,reject){var req=db.transaction(MEDIA_STORE,"readonly").objectStore(MEDIA_STORE).index("status").getAll("pending");req.onsuccess=function(){var v=req.result||[];db.close();resolve(v);};req.onerror=function(){db.close();reject(req.error);};});});}
+  function markMediaUploaded(id,result){return openMediaDB().then(function(db){return new Promise(function(resolve,reject){var tx=db.transaction(MEDIA_STORE,"readwrite"),st=tx.objectStore(MEDIA_STORE),req=st.get(id);req.onsuccess=function(){var x=req.result;if(!x)return;x.status="uploaded";x.fileUrl=result.fileUrl||"";x.folderUrl=result.folderUrl||"";x.fileId=result.fileId||"";st.put(x);};tx.oncomplete=function(){db.close();resolve();};tx.onerror=function(){db.close();reject(tx.error);};});});}
+  function updateMediaStatus(){var a=[];if(voiceBlob)a.push("Voice ready");if(videoBlob)a.push("Video ready");$("mediaStatus").textContent=a.length?a.join(" · "):"No voice or video added.";}
+  function stopVoiceRecording(){if(voiceRecorder&&voiceRecorder.state!=="inactive")voiceRecorder.stop();}
+  function startVoiceRecording(){if(!window.MediaRecorder||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast("Voice recording is not supported on this device/browser.");return;}navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){voiceStream=stream;var chunks=[];voiceRecorder=new MediaRecorder(stream);voiceMime=voiceRecorder.mimeType||"audio/webm";voiceRecorder.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};voiceRecorder.onstop=function(){if(voiceTimerInt){clearInterval(voiceTimerInt);voiceTimerInt=null;}if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop();});voiceStream=null;}voiceBlob=new Blob(chunks,{type:voiceMime});$("voicePlayback").src=URL.createObjectURL(voiceBlob);$("voicePlayback").classList.remove("hidden");$("btnVoiceRecord").classList.remove("recording");$("btnVoiceRecord").textContent="🎙 Re-record voice";$("btnVoiceStop").classList.add("hidden");updateMediaStatus();};voiceRecorder.start();voiceStartedAt=Date.now();$("btnVoiceRecord").classList.add("recording");$("btnVoiceRecord").textContent="Recording…";$("btnVoiceStop").classList.remove("hidden");voiceTimerInt=setInterval(function(){var ms=Math.min(MAX_VOICE_MS,Date.now()-voiceStartedAt),sec=Math.floor(ms/1000);$("voiceTimer").textContent=Math.floor(sec/60)+":"+pad(sec%60);if(ms>=MAX_VOICE_MS)stopVoiceRecording();},250);}).catch(function(){toast("Microphone permission is required.");});}
+  $("btnVoiceRecord").addEventListener("click",startVoiceRecording);$("btnVoiceStop").addEventListener("click",stopVoiceRecording);
+  function handleVideoSelected(f){if(!f)return;if(f.type&&f.type.indexOf("video/")!==0){toast("Please choose a video file.");return;}if(f.size>MAX_VIDEO_BYTES){toast("Video is too large. Keep it short (20 seconds maximum).");$("videoInput").value="";return;}var url=URL.createObjectURL(f),probe=document.createElement("video");probe.preload="metadata";probe.onloadedmetadata=function(){if(isFinite(probe.duration)&&probe.duration>MAX_VIDEO_SECONDS+.5){URL.revokeObjectURL(url);$("videoInput").value="";toast("Video must be 20 seconds or less.");return;}videoBlob=f;videoMime=f.type||"video/mp4";videoName=f.name||"inspection-video";$("videoPreview").src=url;$("videoPreview").classList.remove("hidden");updateMediaStatus();};probe.onerror=function(){URL.revokeObjectURL(url);toast("Couldn't read that video.");};probe.src=url;}
+  $("videoInput").addEventListener("change",function(){handleVideoSelected(this.files&&this.files[0]);});$("btnClearMedia").addEventListener("click",function(){if(voiceRecorder&&voiceRecorder.state!=="inactive")stopVoiceRecording();voiceBlob=null;videoBlob=null;voiceMime="";videoMime="";videoName="";$("voicePlayback").removeAttribute("src");$("voicePlayback").classList.add("hidden");$("videoPreview").removeAttribute("src");$("videoPreview").classList.add("hidden");$("videoInput").value="";$("btnVoiceRecord").textContent="🎙 Record voice";updateMediaStatus();});updateMediaStatus();
 
   // ---------- photo input (native camera or gallery) ----------
   btnCam.addEventListener("click", function(){ fileCam.click(); });
@@ -499,7 +491,6 @@
     preview.style.display="block"; btnRetake.classList.remove("hidden");
     btnSave.disabled=false; btnDownload.disabled=false;
     saveNote.textContent="Looks right? The stamp updates live. Tap save to keep it.";
-    requestGpsCapture();  // capture GPS at photo time
     draw();
   }
 
@@ -618,7 +609,7 @@
     // ----- text block (full width) -----
     var tx=P+Math.round(12*S), tw=W-tx-P;
     var dt=humanDateTime();
-    var stageColor = state.stage==="AFTER" ? "#33c26b" : "#ffab2e";
+    var stageColor = state.stage==="AFTER" ? "#33c26b" : (state.stage==="INSPECTION" ? "#73b7ff" : "#ffab2e");
 
     // branch name (headline)
     ctx.textAlign="left"; ctx.fillStyle="#ffffff";
@@ -727,40 +718,22 @@
     var h=d.getHours(),ap=h>=12?"PM":"AM",h12=h%12||12;
     return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" "+h12+":"+pad(d.getMinutes())+" "+ap;
   }
-  function currentRecord(){
-    return {
-      savedAt:new Date().toISOString(),
-      when:$("when").value||toLocalInput(new Date()),
-      branch:state.branch||"", stage:state.stage,
-      mR:selSku("Mingles")?cval(counts.Mingles.refill):"", mB:selSku("Mingles")?cval(counts.Mingles.bo):"",
-      sR:selSku("Singles")?cval(counts.Singles.refill):"", sB:selSku("Singles")?cval(counts.Singles.bo):"",
-      rR:selSku("RTE")?cval(counts.RTE.refill):"", rB:selSku("RTE")?cval(counts.RTE.bo):"",
-      staff:state.staff||"", remarks:$("remarks").value.trim(),
-      lat:gpsState.lat||null, lng:gpsState.lng||null, acc:gpsState.acc||null, gpsTime:gpsState.time||null
-    };
-  }
-  function bizKey(r){ return [r.when,r.branch,r.stage,r.mR,r.mB,r.sR,r.sB,r.rR,r.rB,r.staff,r.remarks].join("|"); }
-  function logVisit(){
-    var rec=currentRecord(), log=getLog();
-    if(log.length && bizKey(log[log.length-1])===bizKey(rec)) return; // skip accidental double-tap
-    rec.device=deviceId(); rec.synced=false; rec.syncedAt=null;
-    log.push(rec); setLog(log); updateRecCount(); updateSyncStatus();
-    syncNow(false); // background push to Google Sheet (no-op if no URL / offline)
-  }
+  function currentRecord(){return {savedAt:new Date().toISOString(),when:$("when").value||toLocalInput(new Date()),branch:state.branch||"",stage:state.stage,mR:selSku("Mingles")?cval(counts.Mingles.refill):"",mB:selSku("Mingles")?cval(counts.Mingles.bo):"",mT:selSku("Mingles")?cval(counts.Mingles.transfer):"",mTo:selSku("Mingles")?String(counts.Mingles.transferTo||""):"",sR:selSku("Singles")?cval(counts.Singles.refill):"",sB:selSku("Singles")?cval(counts.Singles.bo):"",sT:selSku("Singles")?cval(counts.Singles.transfer):"",sTo:selSku("Singles")?String(counts.Singles.transferTo||""):"",rR:selSku("RTE")?cval(counts.RTE.refill):"",rB:selSku("RTE")?cval(counts.RTE.bo):"",rT:selSku("RTE")?cval(counts.RTE.transfer):"",rTo:selSku("RTE")?String(counts.RTE.transferTo||""):"",staff:state.staff||"",remarks:$("remarks").value.trim(),inspectionNotes:$("inspectionNotes").value.trim(),hasVoice:!!voiceBlob,hasVideo:!!videoBlob,hasPhoto:!!hasImage};}
+  function bizKey(r){return [r.when,r.branch,r.stage,r.mR,r.mB,r.mT,r.mTo,r.sR,r.sB,r.sT,r.sTo,r.rR,r.rB,r.rT,r.rTo,r.staff,r.remarks,r.inspectionNotes].join("|");}
+  function validateTransfer(rec){var items=[["Mingles",rec.mT,rec.mTo],["Singles",rec.sT,rec.sTo],["RTE",rec.rT,rec.rTo]];for(var i=0;i<items.length;i++){if(Number(items[i][1])>0&&items[i][2]&&items[i][2]===rec.branch)return items[i][0]+": destination must be a different store.";}return "";}
+  function enqueueInspectionMedia(rec){if(rec.stage!=="INSPECTION")return Promise.resolve();var key=bizKey(rec),tasks=[];function add(type,blob,mime,name){if(!blob)return;tasks.push(saveMediaItem({id:key+"|"+type,cameraKey:key,mediaType:type,mimeType:mime||blob.type||"application/octet-stream",filename:name||type,blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}));}add("voice",voiceBlob,voiceMime,"voice.webm");add("video",videoBlob,videoMime,videoName||"video.mp4");if(hasImage){tasks.push(new Promise(function(resolve){buildBlob(function(blob,name){if(!blob){resolve();return;}saveMediaItem({id:key+"|photo",cameraKey:key,mediaType:"photo",mimeType:"image/jpeg",filename:name||"photo.jpg",blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}).then(resolve).catch(resolve);});}));}return Promise.all(tasks);}
+  function logVisit(showToast){var rec=currentRecord(),err=validateTransfer(rec);if(err){toast(err);return false;}var log=getLog();if(log.length&&bizKey(log[log.length-1])===bizKey(rec)){if(showToast)toast("Visit already saved.");syncNow(false);return true;}rec.device=deviceId();rec.synced=false;rec.syncedAt=null;rec.mediaPending=(rec.stage==="INSPECTION"&&(rec.hasPhoto||rec.hasVoice||rec.hasVideo));log.push(rec);setLog(log);updateRecCount();updateSyncStatus();enqueueInspectionMedia(rec).then(function(){syncNow(false);});if(showToast)toast(navigator.onLine?"Visit saved — syncing…":"Visit saved offline.");return true;}
+  $("btnLogVisit").addEventListener("click",function(){logVisit(true);});
   function updateRecCount(){
     var n=getLog().length, el=$("recCount");
     if(el) el.textContent = n+" record"+(n===1?"":"s")+" saved";
   }
   function csvCell(v){ v=(v==null?"":String(v)); return /[",\r\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
   function toCSV(){
-    var head=["Saved At","Visit Date/Time","Branch","Stage",
-      "Mingles Refill","Mingles BO","Singles Refill","Singles BO","RTE Refill","RTE BO","Staff","Remarks",
-      "Latitude","Longitude","GPS Accuracy (m)","GPS Capture Time"];
+    var head=["Saved At","Visit Date/Time","Branch","Stage","Mingles Refill","Mingles BO","Mingles Transfer","Mingles Transfer To","Singles Refill","Singles BO","Singles Transfer","Singles Transfer To","RTE Refill","RTE BO","RTE Transfer","RTE Transfer To","Staff","Remarks","Inspection Notes"];
     var rows=[head];
     getLog().forEach(function(r){
-      rows.push([r.savedAt, fmtWhen(r.when), r.branch, r.stage,
-        r.mR, r.mB, r.sR, r.sB, r.rR, r.rB, r.staff, r.remarks,
-        r.lat||"", r.lng||"", r.acc||"", r.gpsTime||""]);
+      rows.push([r.savedAt,fmtWhen(r.when),r.branch,r.stage,r.mR,r.mB,r.mT||"",r.mTo||"",r.sR,r.sB,r.sT||"",r.sTo||"",r.rR,r.rB,r.rT||"",r.rTo||"",r.staff,r.remarks,r.inspectionNotes||""]);
     });
     return "\uFEFF"+rows.map(function(row){ return row.map(csvCell).join(","); }).join("\r\n");
   }
@@ -779,7 +752,6 @@
     if(confirm(msg)){ setLog([]); updateRecCount(); updateSyncStatus(); toast("Local records cleared"); }
   });
   updateRecCount();
-  requestGpsPermission();  // ask for location on app load
 
   // ---------- cloud sync (permanent Google Apps Script endpoint) ----------
   // Updated: 2026-09-22
@@ -809,9 +781,7 @@
   function pendingRecords(){ return getLog().filter(function(r){ return !r.synced; }); }
   function toSyncRecord(r){
     return { key:bizKey(r), savedAt:r.savedAt, when:fmtWhen(r.when),
-      branch:r.branch, stage:r.stage, mR:r.mR, mB:r.mB, sR:r.sR, sB:r.sB, rR:r.rR, rB:r.rB,
-      staff:r.staff, remarks:r.remarks, device:r.device||deviceId(),
-      lat:r.lat||null, lng:r.lng||null, acc:r.acc||null, gpsTime:r.gpsTime||null };
+      branch:r.branch,stage:r.stage,mR:r.mR,mB:r.mB,mT:r.mT||"",mTo:r.mTo||"",sR:r.sR,sB:r.sB,sT:r.sT||"",sTo:r.sTo||"",rR:r.rR,rB:r.rB,rT:r.rT||"",rTo:r.rTo||"",staff:r.staff,remarks:r.remarks,inspectionNotes:r.inspectionNotes||"",hasPhoto:!!r.hasPhoto,hasVoice:!!r.hasVoice,hasVideo:!!r.hasVideo,device:r.device||deviceId() };
   }
   function setSyncStatus(txt, cls){ var el=$("syncStatus"); if(el){ el.textContent=txt; el.className="sync-status "+cls; } }
   function updateSyncStatus(){
@@ -822,6 +792,11 @@
       setSyncStatus(pend+" record"+(pend===1?"":"s")+" waiting to sync"+(navigator.onLine?"":" (offline)"),"wait");
     }
   }
+
+  function blobToBase64(blob){return new Promise(function(resolve,reject){var fr=new FileReader();fr.onload=function(){var s=String(fr.result||""),p=s.indexOf(",");resolve(p>=0?s.slice(p+1):s);};fr.onerror=function(){reject(fr.error||new Error("Could not read media"));};fr.readAsDataURL(blob);});}
+  function recordForKey(key){var log=getLog();for(var i=0;i<log.length;i++)if(bizKey(log[i])===key)return log[i];return null;}
+  function uploadMediaItem(item){var rec=recordForKey(item.cameraKey);if(!rec)return Promise.reject(new Error("Local visit record not found"));return blobToBase64(item.blob).then(function(b64){return fetch(syncURL(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},redirect:"follow",body:JSON.stringify({action:"uploadMedia",token:syncTok(),cameraKey:item.cameraKey,when:fmtWhen(rec.when),branch:rec.branch,stage:rec.stage,inspectionNotes:rec.inspectionNotes||"",mediaType:item.mediaType,mimeType:item.mimeType,filename:item.filename,data:b64})});}).then(function(res){return res.json();}).then(function(data){if(!data||!data.ok)throw new Error((data&&data.error)||"media upload failed");return markMediaUploaded(item.id,data).then(function(){return data;});});}
+  function syncPendingMedia(){if(!navigator.onLine)return Promise.resolve(0);return getAllPendingMedia().then(function(items){var chain=Promise.resolve(),done=0;items.forEach(function(item){chain=chain.then(function(){return uploadMediaItem(item).then(function(){done++;});});});return chain.then(function(){return done;});});}
 
   var syncing=false;
   function syncNow(manual){
@@ -867,12 +842,10 @@
         });
 
         setLog(log);
-        syncing=false;
-        updateSyncStatus();
-
-        if(manual){
-          toast(cnt ? ("Synced to Tropikind Cam Delivery \u2713 ("+cnt+")") : "Server connected \u2014 no new records marked");
-        }
+        return syncPendingMedia().then(function(mediaCount){
+          syncing=false;updateSyncStatus();
+          if(manual){var msg=cnt?("Synced visits ✓ ("+cnt+")"):"Visit data up to date";if(mediaCount)msg+=" · media "+mediaCount;toast(msg);}
+        });
       })
       .catch(function(err){
         syncing=false;
