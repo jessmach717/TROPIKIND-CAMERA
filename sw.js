@@ -1,4 +1,4 @@
-const CACHE = 'tropikind-camera-v8';
+const CACHE = 'tropikind-camera-v9';
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './maskable-512.png'];
 

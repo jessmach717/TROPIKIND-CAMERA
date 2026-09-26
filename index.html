@@ -185,6 +185,25 @@
   .sync-cfg .hint{font-size:10.5px;color:var(--muted);margin:5px 2px 0;line-height:1.45}
   button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
   .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
+
+  /* ---------- Full-page CSV viewer ---------- */
+  .csv-page{
+    position:fixed;inset:0;z-index:100;background:var(--bg);color:var(--white);
+    display:none;overflow:auto;padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 18px);
+  }
+  .csv-page.show{display:block}
+  .csv-head{
+    position:sticky;top:0;z-index:2;background:rgba(6,16,31,.96);
+    backdrop-filter:blur(10px);padding:10px 0 12px;border-bottom:1px solid var(--line);
+  }
+  .csv-head .bar{display:flex;gap:10px;align-items:center}
+  .csv-head h2{margin:0;font-size:18px;flex:1}
+  .csv-wrap{overflow:auto;margin-top:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px}
+  .csv-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:12px;background:#081525}
+  .csv-table th,.csv-table td{border:1px solid rgba(255,255,255,.08);padding:8px 9px;white-space:nowrap;text-align:left}
+  .csv-table th{position:sticky;top:62px;background:#0e2545;color:var(--gold-soft);z-index:1}
+  .csv-empty{padding:28px;text-align:center;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -315,7 +334,7 @@
     </div>
     <div class="row">
       <button id="btnSyncNow" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Sync now</button>
-      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export CSV</button>
+      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>View CSV</button>
       <button id="btnClear" class="ghost danger">Clear</button>
     </div>
   </div>
@@ -327,6 +346,18 @@
   <div class="hint">Press &amp; hold the picture, then tap <b>“Save image”</b> (or <b>“Download image”</b>) to add it to your Gallery.</div>
   <img id="resultImg" alt="TropiKind stamped photo">
   <button class="ghost close" id="closeOverlay">Done</button>
+</div>
+
+
+<div class="csv-page" id="csvPage">
+  <div class="csv-head">
+    <div class="bar">
+      <button type="button" class="ghost" id="btnCsvBack">← Main</button>
+      <h2>Saved Visit Records</h2>
+      <button type="button" class="ghost" id="btnCsvDownload">Download CSV</button>
+    </div>
+  </div>
+  <div class="csv-wrap" id="csvWrap"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -818,8 +849,56 @@
     });
     return "\uFEFF"+rows.map(function(row){ return row.map(csvCell).join(","); }).join("\r\n");
   }
+  function escapeCell(v){
+    return String(v==null?"":v).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function csvRowsForView(){
+    var head=["Saved At","Visit Date/Time","Branch","Stage","Mingles Refill","Mingles BO","Mingles Transfer","Mingles Transfer To","Singles Refill","Singles BO","Singles Transfer","Singles Transfer To","RTE Refill","RTE BO","RTE Transfer","RTE Transfer To","Staff","Remarks","Inspection Notes"];
+    var rows=[head];
+    getLog().forEach(function(r){
+      rows.push([r.savedAt,fmtWhen(r.when),r.branch,r.stage,r.mR,r.mB,r.mT||"",r.mTo||"",r.sR,r.sB,r.sT||"",r.sTo||"",r.rR,r.rB,r.rT||"",r.rTo||"",r.staff,r.remarks,r.inspectionNotes||""]);
+    });
+    return rows;
+  }
+
+  function showCsvPage(){
+    var log=getLog();
+    var wrap=$("csvWrap");
+    if(!log.length){
+      wrap.innerHTML='<div class="csv-empty">No saved visit records yet.</div>';
+    }else{
+      var rows=csvRowsForView();
+      var out='<table class="csv-table"><thead><tr>';
+      rows[0].forEach(function(v){out+='<th>'+escapeCell(v)+'</th>';});
+      out+='</tr></thead><tbody>';
+      for(var i=1;i<rows.length;i++){
+        out+='<tr>';
+        rows[i].forEach(function(v){out+='<td>'+escapeCell(v)+'</td>';});
+        out+='</tr>';
+      }
+      out+='</tbody></table>';
+      wrap.innerHTML=out;
+    }
+    $("csvPage").classList.add("show");
+    document.body.style.overflow="hidden";
+  }
+
+  function hideCsvPage(){
+    $("csvPage").classList.remove("show");
+    document.body.style.overflow="";
+  }
+
   $("btnExport").addEventListener("click", function(){
-    if(!getLog().length){ toast("No records yet — save a visit first"); return; }
+    showCsvPage();
+  });
+
+  $("btnCsvBack").addEventListener("click", hideCsvPage);
+
+  $("btnCsvDownload").addEventListener("click", function(){
+    if(!getLog().length){ toast("No records yet"); return; }
     var blob=new Blob([toCSV()], {type:"text/csv;charset=utf-8"});
     var d=new Date();
     diskSave(blob, "TROPIKIND_records_"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+".csv");
@@ -833,6 +912,9 @@
     if(confirm(msg)){ setLog([]); updateRecCount(); updateSyncStatus(); toast("Local records cleared"); }
   });
   updateRecCount();
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape" && $("csvPage").classList.contains("show")) hideCsvPage();
+  });
 
   // ---------- cloud sync (permanent Google Apps Script endpoint) ----------
   // Updated: 2026-09-22
