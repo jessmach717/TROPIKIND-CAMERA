@@ -128,6 +128,9 @@
   .inspection-title b{font-size:15px}
   .inspection-badge{font-size:10px;font-weight:800;letter-spacing:.06em;color:#06101f;background:#73b7ff;padding:5px 8px;border-radius:999px}
   .media-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+  .media-actions .ghost{border:1px solid rgba(255,255,255,.2);border-radius:11px;background:#0a1929;color:#e8f2ff;min-height:48px;padding:11px 12px;font-weight:800;box-sizing:border-box}
+  .media-actions label.ghost{display:grid!important;place-items:center}
+  .media-actions .ghost:hover{border-color:rgba(115,183,255,.55)}
   .media-preview{margin-top:10px;width:100%;max-height:240px;border-radius:12px;background:#02060d}
   .media-status{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
   .media-file{display:none}
@@ -137,6 +140,8 @@
   .sku-row input::placeholder{color:rgba(255,255,255,.26);font-weight:800}
   .inline{display:flex;gap:8px;align-items:stretch}
   .inline input{flex:1}
+  #branch{font-size:19px;font-weight:800;min-height:54px;padding:12px 14px;border-width:2px}
+  label[for="branch"]{font-size:12px;font-weight:800;letter-spacing:.06em;color:#dce9f8}
   .inline button{flex:0 0 auto;padding:0 14px}
 
   /* segmented stage toggle */
@@ -268,13 +273,13 @@
     </div>
   </div>
 
-  <div class="panel inspection-panel hidden" id="inspectionPanel">
-    <div class="inspection-title"><b>Inspection documentation</b><span class="inspection-badge">INSPECTION</span></div>
-    <div class="field"><label for="inspectionNotes">Inspection notes</label><textarea id="inspectionNotes" placeholder="Store condition, product observation, issue, action needed..."></textarea></div>
+  <div class="panel inspection-panel" id="inspectionPanel">
+    <div class="inspection-title"><b>Visit media &amp; notes</b><span class="inspection-badge" id="mediaStageBadge">AFTER</span></div>
+    <div class="field"><label for="inspectionNotes">Visit notes</label><textarea id="inspectionNotes" placeholder="Product condition, display observation, issue, action taken..."></textarea></div>
     <div class="media-actions">
       <button type="button" class="ghost" id="btnVoiceRecord">🎙 Record voice</button>
       <button type="button" class="ghost hidden" id="btnVoiceStop">■ Stop <span id="voiceTimer">0:00</span></button>
-      <label class="ghost" for="videoInput" style="display:grid;place-items:center;cursor:pointer">🎥 Capture video</label>
+      <label class="ghost" for="videoInput" style="cursor:pointer">🎥 Capture video</label>
       <button type="button" class="ghost" id="btnClearMedia">Clear media</button>
     </div>
     <audio id="voicePlayback" class="media-preview hidden" controls></audio>
@@ -388,7 +393,11 @@
 
   // ---------- stage toggle ----------
   var seg=$("seg");
-  function renderStageUI(){ var inspection=state.stage==="INSPECTION"; $("inspectionPanel").classList.toggle("hidden",!inspection); }
+  function renderStageUI(){
+    $("inspectionPanel").classList.remove("hidden");
+    var badge=$("mediaStageBadge");
+    if(badge) badge.textContent=state.stage;
+  }
   function setStage(v){
     if(["BEFORE","AFTER","INSPECTION"].indexOf(v)<0) v="AFTER";
     state.stage=v; LS.set("tk_stage",v);
@@ -721,8 +730,8 @@
   function currentRecord(){return {savedAt:new Date().toISOString(),when:$("when").value||toLocalInput(new Date()),branch:state.branch||"",stage:state.stage,mR:selSku("Mingles")?cval(counts.Mingles.refill):"",mB:selSku("Mingles")?cval(counts.Mingles.bo):"",mT:selSku("Mingles")?cval(counts.Mingles.transfer):"",mTo:selSku("Mingles")?String(counts.Mingles.transferTo||""):"",sR:selSku("Singles")?cval(counts.Singles.refill):"",sB:selSku("Singles")?cval(counts.Singles.bo):"",sT:selSku("Singles")?cval(counts.Singles.transfer):"",sTo:selSku("Singles")?String(counts.Singles.transferTo||""):"",rR:selSku("RTE")?cval(counts.RTE.refill):"",rB:selSku("RTE")?cval(counts.RTE.bo):"",rT:selSku("RTE")?cval(counts.RTE.transfer):"",rTo:selSku("RTE")?String(counts.RTE.transferTo||""):"",staff:state.staff||"",remarks:$("remarks").value.trim(),inspectionNotes:$("inspectionNotes").value.trim(),hasVoice:!!voiceBlob,hasVideo:!!videoBlob,hasPhoto:!!hasImage};}
   function bizKey(r){return [r.when,r.branch,r.stage,r.mR,r.mB,r.mT,r.mTo,r.sR,r.sB,r.sT,r.sTo,r.rR,r.rB,r.rT,r.rTo,r.staff,r.remarks,r.inspectionNotes].join("|");}
   function validateTransfer(rec){var items=[["Mingles",rec.mT,rec.mTo],["Singles",rec.sT,rec.sTo],["RTE",rec.rT,rec.rTo]];for(var i=0;i<items.length;i++){if(Number(items[i][1])>0&&items[i][2]&&items[i][2]===rec.branch)return items[i][0]+": destination must be a different store.";}return "";}
-  function enqueueInspectionMedia(rec){if(rec.stage!=="INSPECTION")return Promise.resolve();var key=bizKey(rec),tasks=[];function add(type,blob,mime,name){if(!blob)return;tasks.push(saveMediaItem({id:key+"|"+type,cameraKey:key,mediaType:type,mimeType:mime||blob.type||"application/octet-stream",filename:name||type,blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}));}add("voice",voiceBlob,voiceMime,"voice.webm");add("video",videoBlob,videoMime,videoName||"video.mp4");if(hasImage){tasks.push(new Promise(function(resolve){buildBlob(function(blob,name){if(!blob){resolve();return;}saveMediaItem({id:key+"|photo",cameraKey:key,mediaType:"photo",mimeType:"image/jpeg",filename:name||"photo.jpg",blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}).then(resolve).catch(resolve);});}));}return Promise.all(tasks);}
-  function logVisit(showToast){var rec=currentRecord(),err=validateTransfer(rec);if(err){toast(err);return false;}var log=getLog();if(log.length&&bizKey(log[log.length-1])===bizKey(rec)){if(showToast)toast("Visit already saved.");syncNow(false);return true;}rec.device=deviceId();rec.synced=false;rec.syncedAt=null;rec.mediaPending=(rec.stage==="INSPECTION"&&(rec.hasPhoto||rec.hasVoice||rec.hasVideo));log.push(rec);setLog(log);updateRecCount();updateSyncStatus();enqueueInspectionMedia(rec).then(function(){syncNow(false);});if(showToast)toast(navigator.onLine?"Visit saved — syncing…":"Visit saved offline.");return true;}
+  function enqueueInspectionMedia(rec){var key=bizKey(rec),tasks=[];function add(type,blob,mime,name){if(!blob)return;tasks.push(saveMediaItem({id:key+"|"+type,cameraKey:key,mediaType:type,mimeType:mime||blob.type||"application/octet-stream",filename:name||type,blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}));}add("voice",voiceBlob,voiceMime,"voice.webm");add("video",videoBlob,videoMime,videoName||"video.mp4");if(hasImage){tasks.push(new Promise(function(resolve){buildBlob(function(blob,name){if(!blob){resolve();return;}saveMediaItem({id:key+"|photo",cameraKey:key,mediaType:"photo",mimeType:"image/jpeg",filename:name||"photo.jpg",blob:blob,status:"pending",fileUrl:"",folderUrl:"",createdAt:new Date().toISOString()}).then(resolve).catch(resolve);});}));}return Promise.all(tasks);}
+  function logVisit(showToast){var rec=currentRecord(),err=validateTransfer(rec);if(err){toast(err);return false;}var log=getLog();if(log.length&&bizKey(log[log.length-1])===bizKey(rec)){if(showToast)toast("Visit already saved.");syncNow(false);return true;}rec.device=deviceId();rec.synced=false;rec.syncedAt=null;rec.mediaPending=!!(rec.hasPhoto||rec.hasVoice||rec.hasVideo);log.push(rec);setLog(log);updateRecCount();updateSyncStatus();enqueueInspectionMedia(rec).then(function(){syncNow(false);});if(showToast)toast(navigator.onLine?"Visit saved — syncing…":"Visit saved offline.");return true;}
   $("btnLogVisit").addEventListener("click",function(){logVisit(true);});
   function updateRecCount(){
     var n=getLog().length, el=$("recCount");
