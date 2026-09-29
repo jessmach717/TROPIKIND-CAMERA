@@ -407,11 +407,7 @@
 (function(){
   "use strict";
 
-  var BRANCHES = ["Cabantian (new) St Mary Church","Bajada","Lanang","Damosa 1","Flyover",
-    "Cabantian 1 Country Homes","MTS","Sandawa","Obrero 2 (Kumon)","Anda","Acacia","UM Matina",
-    "Ecoland","Cabaguio","DMC","Doverlanes","Matina Crossing","Mabini","Rizal","Communal",
-    "Sasa KM9","Torres","Sta. Ana","Roxas","Jacinto 5","Jacinto 4","Km 6 Buhangin",
-    "Km 5 Buhangin","Tagum 7","Tagum 16"];
+  var BRANCHES = ["Acacia","Anda","Asano-new","Bajada","Buhangin KM5","Buhangin KM6","Cabaguio","Cabantian 1","Cabantian 2","Claveria-New","Communal","Damosa-1","DMC","Doverlane","Ecoland","Flyover","J4","J5","Kumon Obrero","Lanang","Maa 1 - Gem-New","Maa 2-New","Mabini","Malvar-New","Matina Crossing","MDRMC","MTS","N. Torres","Rizal","Roxas","Sandawa","Sasa","Sta.Ana","UM Matina"];
   var STAFF = ["Laydan","Shara","Roxanne","Dennis","Rey"];
 
   // ---------- storage helpers ----------
@@ -439,7 +435,8 @@
   // ---------- populate selects ----------
   function fillSelect(sel, list, extraKey, current){
     var custom = LS.get(extraKey, []);
-    var all = list.concat(custom.filter(function(x){return list.indexOf(x)<0;}));
+    var all = list.concat(custom.filter(function(x){return list.indexOf(x)<0;}))
+      .sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"});});
     sel.innerHTML="";
     all.forEach(function(v){
       var o=document.createElement("option"); o.value=v; o.textContent=v;
@@ -500,7 +497,11 @@
   var counts={Mingles:{refill:"",bo:"",transfer:"",transferTo:""},Singles:{refill:"",bo:"",transfer:"",transferTo:""},RTE:{refill:"",bo:"",transfer:"",transferTo:""}};
   var ORDER=["Mingles","Singles","RTE"], skuBox=$("skuCounts"), skuField=$("skuCountsField");
   function escHtml(v){return String(v||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-  function allBranches(){var custom=LS.get("tk_custom_branch",[]);return BRANCHES.concat(custom.filter(function(x){return BRANCHES.indexOf(x)<0;}));}
+  function allBranches(){
+    var custom=LS.get("tk_custom_branch",[]);
+    return BRANCHES.concat(custom.filter(function(x){return BRANCHES.indexOf(x)<0;}))
+      .sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"});});
+  }
   function transferOptions(selected){return '<option value="">Not assigned yet</option>'+allBranches().filter(function(b){return b!==state.branch;}).map(function(b){return '<option value="'+escHtml(b)+'"'+(b===selected?' selected':'')+'>'+escHtml(b)+'</option>';}).join("");}
   function renderSkuCounts(){
     var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});skuBox.innerHTML="";if(!active.length){skuField.style.display="none";return;}skuField.style.display="";
