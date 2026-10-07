@@ -1,0 +1,50 @@
+TROPIKIND CAMERA v2.13 + DELIVERY.GS v2.5
+
+What is ready
+- Photo Code (AR) and Receipt Photo Link (AS) were added to the live Tropikind Cam Delivery tab.
+- Existing Photo Link (AM) holds the display photo. Drive Folder Link (AP) points to Tropikind Files.
+- Both images stay separate, retain original pixel dimensions, and show the same 4-character code.
+- Existing visit fields, quantities, camera key, CSV, sync URL/token settings and record sync format are unchanged.
+- Photos use an additional uploadMedia request with photoCode and expectedReceipt metadata.
+- All NEW media files go directly into the existing Tropikind Files root folder. Existing files are not moved.
+
+Required deployment steps (these have not been performed for you)
+1. Open the provided Google Sheet, then Extensions > Apps Script.
+2. Replace the existing Delivery.gs content with this package's Delivery.gs. Do not keep a second copy of the old functions.
+3. Save the project. Run authorizeDrive once and accept Google's requested Drive access if prompted.
+4. Deploy > Manage deployments > Edit the existing Web App deployment > New version > Deploy.
+   Keep its existing execution/access settings and Web App URL. The deploying account needs access to the Sheet and folder.
+5. In GitHub, replace index.html and sw.js. Keep existing manifest and icons. Publish and reload the camera app.
+6. In Sync settings, keep your current Web App URL and matching secret token. Tap Upload / retry photos if needed.
+
+How to use
+- Start a New visit, enter details, take/upload the display photo, and optionally take/upload the actual DR/BO receipt.
+- Tap Save photos once: the two images are offered to your device and queued for Drive upload.
+- Download photos and manual Save to Gallery also queue both images.
+- Use the MAIN Save photos button to upload the pair; the separate receipt save/download controls only save that receipt locally.
+- Record sync runs independently; each selected product row for the visit gets the same code and photo links.
+- Media Upload Status shows RECEIPT PENDING until the attached receipt finishes, then UPLOADED.
+- Confirm no pending uploads before clearing browser storage. Photos waiting to upload are stored in this browser's IndexedDB.
+- New visit clears photo previews, but retains already queued uploads. Retaking alone does not change the code.
+
+Retry and storage behavior
+- Offline photos stay queued; reconnecting, reloading or Upload / retry photos retries them.
+- Failed upload responses do not remove queued photos. An old Apps Script deployment is detected and prompts an update.
+- Identical file retries reuse the same Drive file. A retaken/changed image creates a new file and updates the Sheet link;
+  previous Drive files remain in the folder. Four-character codes are matching labels, not globally unique IDs.
+- Original camera key + media type + code + content hash determine upload identity, not the short code alone.
+- If a different code is sent for an existing camera key, the script rejects it rather than mislinking photos.
+  Set a new visit date/time for a distinct visit whose other fields match an earlier one.
+- Drive links retain the folder's existing access restrictions; this update does not make photos public.
+- Maximum upload size: 18 MB per photo. Larger photos still save locally but are not queued for Drive.
+- A device share sheet may require Save to Gallery; unsupported browsers show both images to save individually.
+- Browser clearing, private browsing or storage eviction can remove pending local photos; keep device copies.
+
+Verification
+- Script syntax and Apps Script integration tested locally using simulated Google services.
+- Browser tests exercised photo input, original JPEG dimensions, paired codes/filenames, save-both fallback,
+  persistent queued uploads across reload, record acknowledgments, Drive responses and Sheet link updates.
+- No test visits or sample photos were written to the live Sheet/Drive. Only the two requested headers were added.
+- Actual Drive uploads require the deployment steps above; live end-to-end upload is not yet verified.
+
+Cache: tropikind-camera-v17.

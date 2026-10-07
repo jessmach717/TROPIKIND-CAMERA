@@ -197,6 +197,20 @@
   <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
   <input type="file" id="file" accept="image/*" class="hidden">
 
+
+  <div class="panel" id="receiptPanel">
+    <div class="recrow"><strong>Visit code: <span id="visitCodeLabel"></span></strong><button id="newVisit" class="ghost">New visit</button></div>
+    <label>DR/BO receipt photo (optional)</label>
+    <p class="save-note">Take a photo of the actual paper receipt. Keep all four corners visible and avoid glare. Both images use the same code.</p>
+    <div class="row"><button id="receiptTake" class="gold">Take receipt photo</button><button id="receiptUpload" class="ghost">Upload receipt</button></div>
+    <input id="receiptCam" type="file" accept="image/*" capture="environment" class="hidden">
+    <input id="receiptFile" type="file" accept="image/*" class="hidden">
+    <canvas id="receiptPreview" style="display:none;width:100%;height:auto;margin-top:14px;border-radius:10px"></canvas>
+    <div class="row"><button id="receiptSave" class="gold" disabled>Save receipt</button><button id="receiptDownload" class="ghost" disabled>Download receipt</button></div>
+    <div class="row"><button id="receiptRetake" class="ghost" disabled>Retake receipt</button><button id="receiptRemove" class="ghost" disabled>Remove receipt</button></div>
+    <p class="save-note">Receipt saves separately at its original dimensions. Save both images before starting a new visit.</p>
+  </div>
+
   <!-- details -->
   <div class="panel">
     <div class="field">
@@ -252,14 +266,20 @@
   </div>
 
   <div class="row">
-    <button id="btnSave" class="gold" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save to Photos</button>
+    <button id="btnSave" class="gold" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save photos</button>
   </div>
   <div class="row">
-    <button id="btnDownload" class="ghost" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download file</button>
+    <button id="btnDownload" class="ghost" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download photos</button>
   </div>
   <button class="linkbtn" id="btnGallery">Save to Gallery manually (long-press image)</button>
   <div class="save-note" id="saveNote">Add a photo first — the stamp is baked into the saved image.</div>
 
+  <div class="panel">
+    <label>Google Drive photo upload</label>
+    <div id="mediaStatus" class="sync-status off">Checking photo queue…</div>
+    <button id="mediaRetry" class="ghost">Upload / retry photos</button>
+    <p class="save-note">Saving photos also queues both for the Tropikind Files Drive folder. Upload uses your existing sync URL and token. Offline uploads retry when you reconnect.</p>
+  </div>
   <div class="panel recpanel">
     <div class="recrow">
       <span id="recCount">0 records saved</span>
@@ -286,7 +306,7 @@
 
 <div class="img-overlay" id="imgOverlay">
   <div class="hint">Press &amp; hold the picture, then tap <b>“Save image”</b> (or <b>“Download image”</b>) to add it to your Gallery.</div>
-  <img id="resultImg" alt="TropiKind stamped photo">
+  <div style="width:100%;overflow:auto;text-align:center"><img id="resultImg" alt="TropiKind stamped photo"><img id="resultReceiptImg" alt="Stamped DR/BO receipt photo" style="display:none;margin:14px auto 0"></div>
   <button class="ghost close" id="closeOverlay">Done</button>
 </div>
 
@@ -324,6 +344,79 @@
     branch: LS.get("tk_branch","Communal"),
     staff: LS.get("tk_staff","Laydan")
   };
+
+
+  // Image pairing is separate from the record and Google Sheet payload.
+  var receiptBase=document.createElement('canvas'), hasReceipt=false, receiptLoading=false;
+  var receiptLoadId=0;
+  function makeVisitCode(){
+    var alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', code, used=LS.get('tk_photo_codes',[]);
+    do{
+      var random=new Uint32Array(4);crypto.getRandomValues(random);
+      code=Array.from(random,function(n){return alphabet[n%alphabet.length];}).join('');
+    }while(!/[A-Z]/.test(code)||!/[2-9]/.test(code)||used.indexOf(code)>=0);
+    used.push(code);LS.set('tk_photo_codes',used.slice(-500));return code;
+  }
+  var visitCode=LS.get('tk_photo_visit_code','');
+  if(!/^[A-Z0-9]{4}$/.test(visitCode)){visitCode=makeVisitCode();LS.set('tk_photo_visit_code',visitCode);}
+  $('visitCodeLabel').textContent=visitCode;
+  function receiptButtons(){
+    ['receiptSave','receiptDownload','receiptRetake','receiptRemove'].forEach(function(id){$(id).disabled=!hasReceipt||receiptLoading;});
+  }
+  function stampReceipt(ctx,W,H){
+    var size=Math.min(W*.055,H*.055),pad=size*.45;
+    ctx.save();ctx.font='800 '+size+'px Segoe UI, sans-serif';
+    var label='DR/BO '+visitCode,boxW=ctx.measureText(label).width+pad*2,boxH=size+pad*2;
+    var x=W-boxW-pad,y=H-boxH-pad;
+    ctx.fillStyle='rgba(8,29,52,.94)';ctx.fillRect(x,y,boxW,boxH);
+    ctx.fillStyle='#f2d27a';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,x+pad,y+boxH/2);ctx.restore();
+  }
+  function drawReceipt(){
+    var c=$('receiptPreview');c.style.display=hasReceipt?'block':'none';if(!hasReceipt)return;
+    c.width=receiptBase.width;c.height=receiptBase.height;
+    var ctx=c.getContext('2d');ctx.drawImage(receiptBase,0,0);stampReceipt(ctx,c.width,c.height);
+  }
+  function loadReceipt(input){
+    var f=input.files&&input.files[0];input.value='';if(!f)return;
+    if(f.type&&f.type.indexOf('image/')!==0){toast('Choose a receipt photo');return;}
+    var id=++receiptLoadId,url=URL.createObjectURL(f),img=new Image();receiptLoading=true;receiptButtons();
+    img.onload=function(){
+      URL.revokeObjectURL(url);if(id!==receiptLoadId)return;receiptLoading=false;
+      if(!img.naturalWidth||!img.naturalHeight){receiptButtons();toast('Could not read receipt');return;}
+      receiptBase.width=img.naturalWidth;receiptBase.height=img.naturalHeight;
+      receiptBase.getContext('2d').drawImage(img,0,0);hasReceipt=true;drawReceipt();receiptButtons();toast('Receipt added · '+visitCode);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);if(id!==receiptLoadId)return;receiptLoading=false;receiptButtons();toast('Could not open receipt photo');};img.src=url;
+  }
+  function buildReceiptBlob(cb){
+    if(!hasReceipt||receiptLoading)return;
+    var out=document.createElement('canvas');out.width=receiptBase.width;out.height=receiptBase.height;
+    var ctx=out.getContext('2d');ctx.drawImage(receiptBase,0,0);stampReceipt(ctx,out.width,out.height);
+    out.toBlob(function(blob){cb(blob,'TROPIKIND_DR-BO_'+visitCode+'.jpg');},'image/jpeg',.92);
+  }
+  function clearReceipt(){receiptLoadId++;receiptLoading=false;hasReceipt=false;receiptBase.width=0;receiptBase.height=0;drawReceipt();receiptButtons();}
+  $('receiptTake').addEventListener('click',function(){$('receiptCam').click();});
+  $('receiptUpload').addEventListener('click',function(){$('receiptFile').click();});
+  $('receiptRetake').addEventListener('click',function(){$('receiptCam').click();});
+  $('receiptCam').addEventListener('change',function(){loadReceipt(this);});
+  $('receiptFile').addEventListener('change',function(){loadReceipt(this);});
+  $('receiptRemove').addEventListener('click',clearReceipt);
+  $('receiptDownload').addEventListener('click',function(){buildReceiptBlob(function(blob,name){if(blob)diskSave(blob,name);else toast('Could not save receipt');});});
+  $('receiptSave').addEventListener('click',function(){
+    buildReceiptBlob(function(blob,name){
+      if(!blob){toast('Could not save receipt');return;}
+      var f=new File([blob],name,{type:'image/jpeg'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
+        navigator.share({files:[f],title:'DR/BO receipt '+visitCode}).catch(function(err){if(err.name!=='AbortError')showImageOverlay(blob);});
+      }else showImageOverlay(blob);
+    });
+  });
+  $('newVisit').addEventListener('click',function(){
+    if(!confirm('Start a new visit code? Save both current photos first. Current photo previews will be cleared.'))return;
+    visitCode=makeVisitCode();LS.set('tk_photo_visit_code',visitCode);$('visitCodeLabel').textContent=visitCode;
+    btnRetake.click();clearReceipt();toast('New visit · '+visitCode);
+  });
+  ['branch','when','staff'].forEach(function(id){$(id).addEventListener('change',drawReceipt);});
 
   // ---------- populate selects ----------
   function fillSelect(sel, list, extraKey, current){
@@ -456,9 +549,10 @@
     if(!hasImage) return {w:0,h:0};
     // Composite is wider than the source photo so the right panel never covers the image.
     var photoW=base.width;
-    var compositeW=Math.round(photoW/0.76);
+    var compositeW=photoW;
     preview.width=compositeW;
     preview.height=base.height;
+    stageEl.style.aspectRatio=compositeW+" / "+base.height;
     return {w:compositeW,h:base.height,photoW:photoW};
   }
 
@@ -497,133 +591,45 @@
     ctx.restore();
   }
 
-  function drawStamp(ctx, W, H, photoW){
-    // Visual-only composition. Data / CSV / sync payloads are not changed.
-    // The source photo occupies the left side completely; text lives only in the right panel.
-    photoW = photoW || Math.round(W*0.76);
-    var panelX = photoW;
-    var panelW = W-panelX;
-    var S = W/1400;
-    var u = function(n){ return Math.max(1,Math.round(n*S)); };
-    var pad = u(30);
-    var dt = humanDateTime();
-    var after = state.stage === "AFTER";
-
-    // Navy sidebar background
-    var pg=ctx.createLinearGradient(panelX,0,W,0);
-    pg.addColorStop(0,"#08203a");
-    pg.addColorStop(1,"#06182c");
-    ctx.fillStyle=pg;
-    ctx.fillRect(panelX,0,panelW,H);
-
-    // Left gold divider and subtle top/bottom rules
-    ctx.fillStyle="#e0b13a";
-    ctx.fillRect(panelX,0,u(5),H);
-    ctx.fillRect(panelX+u(5),u(170),panelW-u(5),u(3));
-
-    var x=panelX+pad;
-    var right=W-pad;
-    var innerW=panelW-pad*2;
-
-    // Brand area
-    ctx.textAlign="left";
-    ctx.textBaseline="alphabetic";
-    ctx.fillStyle="#ffffff";
-    ctx.font="800 "+u(43)+"px Segoe UI, sans-serif";
-    ctx.fillText("TROPIKIND",x,u(82));
-    ctx.fillStyle="#f2d27a";
-    ctx.font="700 "+u(17)+"px Segoe UI, sans-serif";
-    ctx.fillText("DELIVERY MONITORING",x,u(112));
-
-    // Branch name, fitted to panel width
-    var branch=state.branch||"—";
-    var fs=42;
-    ctx.fillStyle="#ffffff";
-    ctx.font="800 "+u(fs)+"px Segoe UI, sans-serif";
-    while(ctx.measureText(branch).width>innerW && fs>24){
-      fs-=2;
-      ctx.font="800 "+u(fs)+"px Segoe UI, sans-serif";
+  function drawStamp(ctx, W, H){
+    // Overlay inside the original frame: no crop, resize or appended panel.
+    var panelW=W*0.38, panelX=W-panelW;
+    var x=panelX+panelW*0.075, right=W-panelW*0.075, innerW=right-x;
+    var unit=Math.min(H/1000,panelW/320);
+    var after=state.stage==='AFTER', dt=humanDateTime();
+    ctx.save(); ctx.beginPath(); ctx.rect(panelX,0,panelW,H); ctx.clip();
+    ctx.fillStyle='rgba(8,29,52,0.94)';ctx.fillRect(panelX,0,panelW,H);
+    ctx.fillStyle='#e0b13a';ctx.fillRect(panelX,0,Math.max(2,3*unit),H);
+    ctx.textAlign='left';ctx.textBaseline='middle';
+    function text(t,y,size,color,weight){
+      ctx.font=(weight||700)+' '+(size*unit)+'px Segoe UI, sans-serif';
+      ctx.fillStyle=color||'#ffffff';ctx.fillText(t,x,y,innerW);
     }
-    var branchY=u(235);
-    // Allow two-line branch names if still too long
-    if(ctx.measureText(branch).width<=innerW){
-      ctx.fillText(branch,x,branchY);
-    }else{
-      var words=branch.split(/\s+/), line1="", line2="";
-      for(var wi=0;wi<words.length;wi++){
-        var test=(line1?line1+" ":"")+words[wi];
-        if(!line2 && ctx.measureText(test).width<=innerW){ line1=test; }
-        else { line2+=(line2?" ":"")+words[wi]; }
-      }
-      ctx.fillText(line1||branch,x,branchY-u(18));
-      if(line2) ctx.fillText(line2,x,branchY+u(26));
-    }
-
-    // Stage pill
-    var pillY=u(285), pillH=u(56);
-    var stageColor = after ? "#33c26b" : "#ffab2e";
-    ctx.font="800 "+u(31)+"px Segoe UI, sans-serif";
-    var st=state.stage||"—";
-    var stW=Math.min(innerW,ctx.measureText(st).width+u(42));
-    ctx.fillStyle=stageColor; rr(ctx,x,pillY,stW,pillH,pillH/2); ctx.fill();
-    ctx.fillStyle="#06101f"; ctx.fillText(st,x+u(20),pillY+u(38));
-
-    // Date and time
-    ctx.fillStyle="#eaf1f8";
-    ctx.font="600 "+u(24)+"px Segoe UI, sans-serif";
-    ctx.fillText(dt.date,x,u(395));
-    ctx.fillText(dt.time,x,u(432));
-
-    // Divider
-    ctx.fillStyle="rgba(224,177,58,.72)";
-    ctx.fillRect(x,u(468),innerW,u(2));
-
-    var y=u(520);
-    function metricRow(label, value, color){
-      ctx.font="800 "+u(22)+"px Segoe UI, sans-serif";
-      ctx.fillStyle=color;
-      ctx.fillText(label,x,y);
-      ctx.textAlign="right";
-      ctx.fillStyle="#ffffff";
-      ctx.fillText(String(value===""||value==null?"0":value),right,y);
-      ctx.textAlign="left";
-      y+=u(40);
-    }
-
+    text('TROPIKIND',H*.055,34,'#f2d27a',800);
+    text('DELIVERY MONITORING',H*.093,15);
+    text(state.branch||'—',H*.155,28,'#ffffff',800);
+    text(state.stage,H*.225,38,after?'#5be08a':'#ffab2e',800);
+    text(dt.date,H*.28,22);text(dt.time,H*.317,22);
     if(after){
-      var active=ORDER.filter(function(s){ return prodSel.indexOf(s)>=0; });
-      active.forEach(function(sku,idx){
-        ctx.fillStyle="#f2d27a";
-        ctx.font="800 "+u(27)+"px Segoe UI, sans-serif";
-        ctx.fillText(sku.toUpperCase(),x,y);
-        y+=u(42);
-        var c=counts[sku]||{};
-        metricRow("Refill",c.refill||"0","#33c26b");
-        metricRow("BO",c.bo||"0","#ff9a4d");
-        if(idx<active.length-1){
-          ctx.fillStyle="rgba(224,177,58,.55)";
-          ctx.fillRect(x,y-u(8),innerW,u(2));
-          y+=u(28);
+      var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});
+      var block=H*.46/Math.max(3,active.length);
+      active.forEach(function(sku,i){
+        var y=H*.39+i*block,c=counts[sku]||{};
+        ctx.fillStyle='rgba(224,177,58,.55)';ctx.fillRect(x,y-H*.028,innerW,Math.max(1,unit));
+        text(sku.toUpperCase(),y,29,'#f2d27a',800);
+        function metric(label,value,yy,color){
+          ctx.textAlign='left';ctx.font='700 '+(24*unit)+'px Segoe UI, sans-serif';ctx.fillStyle=color;
+          ctx.fillText(label,x,yy,innerW*.48);
+          ctx.textAlign='right';ctx.font='800 '+(42*unit)+'px Segoe UI, sans-serif';
+          ctx.fillText(String(value==null||value===''?'0':value),right,yy,innerW*.44);ctx.textAlign='left';
         }
+        metric('Refill',c.refill,y+block*.34,'#5be08a');
+        metric('BO',c.bo,y+block*.69,'#ffab6b');
       });
-    }else{
-      // BEFORE / non-AFTER: intentionally hide Refill and BO to avoid confusion.
-      ctx.fillStyle="#9fb2c9";
-      ctx.font="600 "+u(21)+"px Segoe UI, sans-serif";
-      ctx.fillText("Pre-restocking photo",x,y);
-      y+=u(44);
-      ctx.fillText("Refill / BO shown on AFTER only",x,y);
-      y+=u(28);
     }
-
-    // Staff block near the bottom, but never over photo
-    var staffY=Math.max(y+u(24),H-u(82));
-    if(staffY>H-u(42)) staffY=H-u(42);
-    ctx.fillStyle="rgba(224,177,58,.62)";
-    ctx.fillRect(x,staffY-u(46),innerW,u(2));
-    ctx.fillStyle="#ffffff";
-    ctx.font="700 "+u(24)+"px Segoe UI, sans-serif";
-    ctx.fillText("Staff: "+(state.staff||"—"),x,staffY);
+    text('Staff: '+(state.staff||'—'),H*.887,23);
+    text('CODE: '+visitCode,H*.957,34,'#f2d27a',800);
+    ctx.restore();
   }
 
   function draw(){
@@ -637,6 +643,7 @@
   window.addEventListener("resize", draw);
 
   // ---------- save ----------
+  // Receipt save handlers use this same browser save surface.
   var claudeUse = (window.claude && typeof window.claude.use==="function") ? window.claude.use.bind(window.claude) : null;
 
   function filename(){
@@ -644,13 +651,13 @@
     var safe=function(s){ return (s||"").replace(/[^\w]+/g,"-").replace(/^-+|-+$/g,""); };
     var d=$("when").value ? new Date($("when").value) : new Date();
     var stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes());
-    return "TROPIKIND_"+safe(state.branch)+"_"+state.stage+"_"+stamp+".jpg";
+    return "TROPIKIND_"+safe(state.branch)+"_"+state.stage+"_"+stamp+"_"+visitCode+".jpg";
   }
 
   function buildBlob(cb){
     var photoW=base.width;
     var out=document.createElement("canvas");
-    out.width=Math.round(photoW/0.76);
+    out.width=base.width;
     out.height=base.height;
     var octx=out.getContext("2d");
     octx.fillStyle="#02060d"; octx.fillRect(0,0,out.width,out.height);
@@ -804,49 +811,139 @@
   updateSyncStatus();
   setTimeout(function(){ syncNow(false); }, 1200);
 
-  // show stamped image so the user can long-press → Save image (works in any Android browser)
-  var overlayURL=null;
-  function showImageOverlay(blob){
-    if(overlayURL){ URL.revokeObjectURL(overlayURL); }
-    overlayURL=URL.createObjectURL(blob);
-    $("resultImg").src=overlayURL;
-    $("imgOverlay").classList.add("show");
+  // Drive photos use a separate durable queue; legacy record/CSV sync stays intact.
+  var mediaDbPromise=null, mediaSyncing=false, mediaLastError='';
+  function mediaDB(){
+    if(!mediaDbPromise)mediaDbPromise=new Promise(function(resolve,reject){
+      if(!window.indexedDB){reject(new Error('Photo upload storage is unavailable'));return;}
+      var request=indexedDB.open('tk_drive_photos_v1',1);
+      request.onupgradeneeded=function(){request.result.createObjectStore('jobs',{keyPath:'id'});};
+      request.onsuccess=function(){resolve(request.result);};request.onerror=function(){reject(request.error);};
+    });return mediaDbPromise;
   }
-  $("closeOverlay").addEventListener("click", function(){
-    $("imgOverlay").classList.remove("show");
-    if(overlayURL){ URL.revokeObjectURL(overlayURL); overlayURL=null; }
-  });
-  $("btnGallery").addEventListener("click", function(){
-    if(!hasImage){ toast("Add a photo first"); return; }
-    logVisit();
-    buildBlob(function(blob){ if(blob) showImageOverlay(blob); });
-  });
-
-  // Save to Photos: use the OS share sheet (tap “Save to Gallery”); fall back to long-press overlay
-  btnSave.addEventListener("click", function(){
-    if(!hasImage) return;
-    logVisit();
-    buildBlob(function(blob,name){
-      if(!blob){ toast("Couldn't build the image."); return; }
-      var f=null; try{ f=new File([blob],name,{type:"image/jpeg"}); }catch(e){}
-      if(f && navigator.canShare && navigator.canShare({files:[f]}) && navigator.share){
-        navigator.share({files:[f], title:"TropiKind", text: state.branch+" · "+state.stage})
-          .then(function(){ toast("Tap \u201CSave to Gallery\u201D in the sheet"); })
-          .catch(function(err){ if(!(err && err.name==="AbortError")) showImageOverlay(blob); });
-      } else {
-        showImageOverlay(blob);   // no share sheet → long-press to save
+  async function mediaStore(action,value){
+    var db=await mediaDB();
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction('jobs',action==='all'?'readonly':'readwrite'),store=tx.objectStore('jobs'),request;
+      if(action==='all')request=store.getAll();else if(action==='put')request=store.put(value);else request=store.delete(value);
+      tx.oncomplete=function(){resolve(request.result);};tx.onerror=function(){reject(tx.error);};tx.onabort=function(){reject(tx.error||new Error('Photo storage failed'));};
+    });
+  }
+  async function updateMediaStatus(){
+    try{
+      var jobs=await mediaStore('all'),label=$('mediaStatus');
+      label.textContent=mediaSyncing?'Uploading photos to Drive…':mediaLastError?mediaLastError:
+        jobs.length?jobs.length+' photo(s) waiting for Drive upload'+(navigator.onLine?'':' — offline'):
+        'No pending photo uploads';
+      label.className='sync-status '+(mediaLastError?'err':jobs.length?'wait':'ok');
+    }catch(err){$('mediaStatus').textContent='Photos can save locally, but Drive queue is unavailable: '+err.message;}
+  }
+  async function queueVisitMedia(items,record,code){
+    try{
+      for(var i=0;i<items.length;i++){
+        if(items[i].blob.size>18*1024*1024)throw new Error('Photo exceeds the 18 MB Drive upload limit. Local saving still works.');
       }
+      var batchId=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
+      var jobs=items.map(function(item,i){return {
+        id:batchId+'-'+i,blob:item.blob,filename:item.name,record:record,
+        photoCode:code,mediaType:i===0?'photo':'receipt',expectedReceipt:items.length===2,createdAt:Date.now()
+      };});
+      // Commit the pair together so a storage failure cannot queue only one photo.
+      var db=await mediaDB();await new Promise(function(resolve,reject){
+        var tx=db.transaction('jobs','readwrite'),store=tx.objectStore('jobs');jobs.forEach(function(job){store.put(job);});
+        tx.oncomplete=resolve;tx.onerror=function(){reject(tx.error);};tx.onabort=function(){reject(tx.error||new Error('Photo storage is full'));};
+      });
+      mediaLastError='';await updateMediaStatus();syncMediaQueue();
+    }catch(err){mediaLastError='Drive photos were not queued: '+err.message;updateMediaStatus();toast('Local photos ready. Drive upload could not be queued.');}
+  }
+  function blobBase64(blob){
+    return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(String(reader.result).split(',')[1]);};reader.onerror=function(){reject(reader.error);};reader.readAsDataURL(blob);});
+  }
+  async function mediaRequest(url,payload){
+    var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},120000);
+    try{
+      var res=await fetch(url,{method:payload?'POST':'GET',cache:'no-store',signal:controller.signal,
+        headers:payload?{'Content-Type':'text/plain;charset=utf-8'}:undefined,body:payload?JSON.stringify(payload):undefined});
+      var data=await res.json();if(!data||!data.ok)throw new Error(data&&data.error||'Drive upload refused');return data;
+    }finally{clearTimeout(timer);}
+  }
+  async function syncMediaQueue(){
+    if(mediaSyncing)return;
+    if(!syncURL()||!navigator.onLine){updateMediaStatus();return;}
+    mediaSyncing=true;mediaLastError='';updateMediaStatus();
+    try{
+      var jobs=await mediaStore('all');if(!jobs.length)return;
+      jobs.sort(function(a,b){return a.createdAt-b.createdAt||a.id.localeCompare(b.id);});
+      var url=syncURL(),token=syncTok(),service=await mediaRequest(url);
+      if(service.mediaVersion!==2||!service.receiptSupported)throw new Error('Deploy the updated Delivery.gs first, then tap Upload / retry photos.');
+      for(var i=0;i<jobs.length;i++){
+        var job=jobs[i];
+        // Ensure the original camera key exists before linking an uploaded file.
+        var ack=await mediaRequest(url,{token:token,device:job.record.device,records:[job.record]});
+        if(!ack.keys||ack.keys.indexOf(job.record.key)<0)throw new Error('Visit sync was not acknowledged; photos remain queued.');
+        var reply=await mediaRequest(url,{action:'uploadMedia',token:token,cameraKey:job.record.key,
+          mediaType:job.mediaType,mimeType:'image/jpeg',photoCode:job.photoCode,expectedReceipt:job.expectedReceipt,
+          branch:job.record.branch,when:job.record.when,data:await blobBase64(job.blob)});
+        if(reply.cameraKey!==job.record.key||reply.mediaType!==job.mediaType||!reply.fileUrl)throw new Error('Incomplete Drive upload response; photo kept for retry.');
+        await mediaStore('delete',job.id);
+      }
+    }catch(err){mediaLastError='Drive upload pending: '+(err.message||'Check connection and retry');}
+    finally{mediaSyncing=false;updateMediaStatus();}
+  }
+  $('mediaRetry').addEventListener('click',function(){syncMediaQueue();});
+  window.addEventListener('online',function(){syncMediaQueue();});
+  setTimeout(function(){updateMediaStatus();syncMediaQueue();},1800);
+
+
+  // show stamped image so the user can long-press → Save image (works in any Android browser)
+  var overlayURL=null, receiptOverlayURL=null;
+  function clearOverlayURLs(){
+    if(overlayURL){URL.revokeObjectURL(overlayURL);overlayURL=null;}
+    if(receiptOverlayURL){URL.revokeObjectURL(receiptOverlayURL);receiptOverlayURL=null;}
+    $('resultImg').removeAttribute('src');$('resultReceiptImg').removeAttribute('src');
+  }
+  function showImageOverlay(blob,receiptBlob){
+    clearOverlayURLs();overlayURL=URL.createObjectURL(blob);$('resultImg').src=overlayURL;
+    $('resultReceiptImg').style.display=receiptBlob?'block':'none';
+    if(receiptBlob){receiptOverlayURL=URL.createObjectURL(receiptBlob);$('resultReceiptImg').src=receiptOverlayURL;}
+    $('imgOverlay').querySelector('.hint').textContent=receiptBlob?
+      'Both photos are ready. Press and hold each image, then choose Save image to save both separately.':
+      'Press and hold the picture, then choose Save image to add it to your Gallery.';
+    $('imgOverlay').classList.add('show');
+  }
+  $('closeOverlay').addEventListener('click',function(){$('imgOverlay').classList.remove('show');clearOverlayURLs();});
+  function buildVisitPhotos(cb){
+    if(receiptLoading){toast('Wait for the receipt photo to finish loading');return;}
+    // Start both encodes together so both stamps use the current visit.
+    var record=toSyncRecord(currentRecord()),code=visitCode;
+    var needed=hasReceipt?2:1,items=[],failed=false;
+    function ready(index,blob,name){
+      if(!blob)failed=true;items[index]={blob:blob,name:name};
+      if(--needed===0){if(failed){toast('Could not build both photos. Please try again.');return;}queueVisitMedia(items,record,code);cb(items);}
+    }
+    buildBlob(function(blob,name){ready(0,blob,name);});
+    if(hasReceipt)buildReceiptBlob(function(blob,name){ready(1,blob,name);});
+  }
+  $('btnGallery').addEventListener('click',function(){
+    if(!hasImage){toast('Add a photo first');return;}
+    buildVisitPhotos(function(items){logVisit();showImageOverlay(items[0].blob,items[1]&&items[1].blob);});
+  });
+  btnSave.addEventListener('click',function(){
+    if(!hasImage)return;
+    buildVisitPhotos(function(items){
+      logVisit();var files=[];
+      try{files=items.map(function(item){return new File([item.blob],item.name,{type:'image/jpeg'});});}catch(e){}
+      function manual(){showImageOverlay(items[0].blob,items[1]&&items[1].blob);}
+      if(files.length===items.length&&navigator.canShare&&navigator.canShare({files:files})&&navigator.share){
+        navigator.share({files:files,title:'TropiKind '+visitCode,text:state.branch+' · '+state.stage})
+          .then(function(){toast(items.length===2?'Both photos shared — choose Save to Gallery':'Choose Save to Gallery');})
+          .catch(function(err){if(!(err&&err.name==='AbortError'))manual();});
+      }else manual();
     });
   });
-
-  // Download file: straight to Downloads
-  btnDownload.addEventListener("click", function(){
-    if(!hasImage) return;
-    logVisit();
-    buildBlob(function(blob,name){
-      if(!blob){ toast("Couldn't build the image."); return; }
-      diskSave(blob,name);
-    });
+  btnDownload.addEventListener('click',function(){
+    if(!hasImage)return;
+    buildVisitPhotos(function(items){logVisit();items.forEach(function(item){diskSave(item.blob,item.name);});});
   });
 
   function fallbackSave(blob,name){
