@@ -743,6 +743,12 @@
 
   // ---------- cloud sync (Google Sheet via Apps Script Web App) ----------
   var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
+  var DEPLOYED_SYNC_TOKEN="tropikind2026";
+  // Apply the matching token once, replacing a blank or previously incorrect token.
+  if(LS.get("tk_sync_token_revision","")!=="paired-photos-v2-15"){
+    LS.set(SYNC_TOK_KEY,DEPLOYED_SYNC_TOKEN);
+    LS.set("tk_sync_token_revision","paired-photos-v2-15");
+  }
   var DEPLOYED_SYNC_URL="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec";
   // Apply this deployment once, including devices that remember an older URL.
   // Subsequent manual sync-setting changes remain editable.
