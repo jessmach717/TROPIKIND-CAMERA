@@ -743,6 +743,14 @@
 
   // ---------- cloud sync (Google Sheet via Apps Script Web App) ----------
   var SYNC_URL_KEY="tk_sync_url", SYNC_TOK_KEY="tk_sync_token", DEV_KEY="tk_device";
+  var DEPLOYED_SYNC_URL="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec";
+  // Apply this deployment once, including devices that remember an older URL.
+  // Subsequent manual sync-setting changes remain editable.
+  if(LS.get("tk_sync_deployment","")!==DEPLOYED_SYNC_URL){
+    LS.set(SYNC_URL_KEY,DEPLOYED_SYNC_URL);
+    LS.set("tk_sync_deployment",DEPLOYED_SYNC_URL);
+  }
+
   function deviceId(){
     var d=LS.get(DEV_KEY,"");
     if(!d){ d="ph-"+Math.random().toString(36).slice(2,7)+Date.now().toString(36).slice(-3); LS.set(DEV_KEY,d); }
