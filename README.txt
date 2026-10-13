@@ -1,7 +1,9 @@
-Tropikind v2.15
-Replace index.html and sw.js in GitHub and reload.
-The supplied Web App URL and matching token are configured automatically. Old/incorrect stored tokens are corrected once.
-Record fields, CSV, photo stamps and upload behavior are unchanged.
-The configured token is visible in client-side HTML; it is not a private credential once published.
-No Apps Script changes are required if SECRET still matches the supplied token.
-Cache: tropikind-camera-v19.
+Tropikind v2.20
+Updated only the BRANCHES/store-name master list to the approved 59 stores.
+DEPLOYED_SYNC_URL unchanged.
+DEPLOYED_SYNC_TOKEN unchanged.
+CSV headers/format unchanged.
+Receipt visit-code pairing unchanged.
+Drive upload queue unchanged.
+Service worker cache bumped to tropikind-camera-v20.
+Replace index.html and sw.js in GitHub and redeploy/reload.
