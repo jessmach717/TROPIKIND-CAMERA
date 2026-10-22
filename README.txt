@@ -1,9 +1,5 @@
-Tropikind v2.20
-Updated only the BRANCHES/store-name master list to the approved 59 stores.
-DEPLOYED_SYNC_URL unchanged.
-DEPLOYED_SYNC_TOKEN unchanged.
-CSV headers/format unchanged.
-Receipt visit-code pairing unchanged.
-Drive upload queue unchanged.
-Service worker cache bumped to tropikind-camera-v20.
-Replace index.html and sw.js in GitHub and redeploy/reload.
+Tropikind v2.23
+BEFORE stage: Beginning Inventory only (Mingles, Singles, RTE). Refill and BO inputs are hidden and cleared.
+AFTER stage: Refill and BO inputs are available. Beginning Inventory is hidden.
+Store names/codes, Dumanlas spelling, Luigi staff entry, Google Sheet report URL, token, CSV format, receipt pairing, Drive upload and sync logic are preserved.
+Service worker cache: tropikind-camera-v23.

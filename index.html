@@ -260,9 +260,42 @@
     </div>
 
     <div class="field">
-      <label for="remarks">Remarks (optional)</label>
-      <textarea id="remarks" placeholder="e.g. defects removed, display re-fronted"></textarea>
+      <label for="remarkSelect">Remarks</label>
+      <select id="remarkSelect">
+        <option value="">Select remark</option>
+        <option>Bad quality fruit</option>
+        <option>Excess supply</option>
+        <option>Good store performance</option>
+        <option>Hot store environment</option>
+        <option>Short supply of banana</option>
+        <option>Short supply of RTE</option>
+        <option>Slow fruit movement</option>
+      </select>
     </div>
+
+    <div class="field">
+      <label for="otherRemarks">Other remarks (optional)</label>
+      <textarea id="otherRemarks" placeholder="Type other remarks here"></textarea>
+    </div>
+
+    <div class="field" id="beginningInventoryField">
+      <label>Beginning Inventory (BEFORE) — enter existing stock before refill</label>
+      <div class="sku-row">
+        <div class="nm">Mingles</div>
+        <div class="cell"><small>Packs</small><input id="biMingles" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <div class="sku-row">
+        <div class="nm">Singles</div>
+        <div class="cell"><small>Packs</small><input id="biSingles" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <div class="sku-row">
+        <div class="nm">RTE</div>
+        <div class="cell"><small>PCS</small><input id="biRTE" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+      </div>
+    </div>
+
+    <!-- Legacy remarks field retained so CSV and Google Sheet payload format stay unchanged. -->
+    <textarea id="remarks" class="hidden"></textarea>
   </div>
 
   <div class="row">
@@ -316,8 +349,8 @@
 (function(){
   "use strict";
 
-  var BRANCHES = ["Acacia","Agdao","Anda","Asano GSIS","Bajada","Bangkal 1","Bangkal 3","Bucana","Buhangin KM5","Buhangin KM6","Cabaguio","Cabantian 1","Cabantian 2","Carpenter","Central Park","Centrale","Claveria","Communal","Damosa-1","Damosa 2","DCCS Washington","DMC","Doverlane","Dumnalas","Ecoland","El Rio","Fatima","Flyover","Garcia Heights","GSIS","Guerrero 1","Indangan Malagamot","J4","J5","Kumon Obrero","Lanang","Maa 1 - Gem","Maa 2","Mabini","Madapo","Malvar","Marfori","Matina Crossing","MDRMC","MTS","N. Torres","NHA Buhangin","Obrero 1","Panorama","Ponce","Quimpo","Rizal","Roxas","San Antonio Agdao","Sandawa","Sasa","St. Mary Buhangin","Sta.Ana","UM Matina"];
-  var STAFF = ["Laydan","Shara","Roxanne","Dennis","Rey"];
+  var BRANCHES = ["Acacia - 130019","Agdao","Anda - 3001","Asano GSIS - 30020","Bajada - 30007","Bangkal 1","Bangkal 3","Bucana","Buhangin KM5 - 30006","Buhangin KM6","Cabaguio - 30021","Cabantian 1 - 30077","Cabantian 2 - 30169","Carpenter","Central Park","Centrale","Claveria - 30017","Communal - 30192","Damosa-1","Damosa 2 - 30168","DCCS Washington - 30220","DMC - 30011","Doverlane - 30037","Dumanlas - 30140","Ecoland - 30009","El Rio - 30101","Fatima - 30057","Flyover - 30012","Garcia Heights - 30053","GSIS","Guerrero 1","Indangan Malagamot","J4 - 30004","J5 - 30044","Kumon Obrero - 30155","Lanang - 30199","Maa 1 - Gem - 30030","Maa 2 - 30034","Mabini - 30078","Madapo","Malvar - 30028","Marfori","Matina Crossing - 30181","MDRMC","MTS - 30010","N. Torres - 30110","NHA Buhangin","Obrero 1 - 30208","Panorama","Ponce - 30049","Quimpo","Rizal - 30098","Roxas - 30026","San Antonio Agdao","Sandawa - 30036","Sasa - 30199","St. Mary Buhangin - 30037","Sta.Ana - 30024","UM Matina - 30167"];
+  var STAFF = ["Laydan","Shara","Roxanne","Dennis","Rey","Luigi"];
 
   // ---------- storage helpers ----------
   var LS = {
@@ -448,7 +481,20 @@
     Array.prototype.forEach.call(seg.querySelectorAll("button"),function(b){
       b.setAttribute("aria-pressed", b.dataset.v===v ? "true":"false");
     });
-    draw();
+
+    // BEFORE = Beginning Inventory only. Refill / BO is not allowed.
+    $("beginningInventoryField").style.display=(v==="BEFORE")?"":"none";
+
+    if(v==="BEFORE" && typeof counts==="object" && counts){
+      ["Mingles","Singles","RTE"].forEach(function(s){
+        if(counts[s]){ counts[s].refill=""; counts[s].bo=""; }
+      });
+    }
+
+    // Re-render the Refill/BO section after initialization or stage changes.
+    if(typeof skuBox!=="undefined" && skuBox) renderSkuCounts();
+
+    composeRemarks();
   }
   seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(b) setStage(b.dataset.v); });
   setStage(state.stage);
@@ -475,6 +521,13 @@
   function renderSkuCounts(){
     var active=ORDER.filter(function(s){ return prodSel.indexOf(s)>=0; });
     skuBox.innerHTML="";
+
+    // Hide Refill / BO completely during BEFORE.
+    if(state.stage!=="AFTER"){
+      skuField.style.display="none";
+      return;
+    }
+
     if(!active.length){ skuField.style.display="none"; return; }
     skuField.style.display="";
     active.forEach(function(s){
@@ -498,8 +551,38 @@
   $("btnNow").addEventListener("click", setNow);
   $("when").addEventListener("change", draw);
   setNow();
+  $("beginningInventoryField").style.display=(state.stage==="BEFORE")?"":"none";
+  composeRemarks();
 
-  $("remarks").addEventListener("input", draw);
+    function inventoryVal(id){
+    var v=$(id).value;
+    return (v===""||v==null) ? "0" : String(v);
+  }
+
+  function composeRemarks(){
+    var parts=[];
+    var fixed=$("remarkSelect").value.trim();
+    var other=$("otherRemarks").value.trim();
+    if(fixed) parts.push(fixed);
+    if(other) parts.push(other);
+
+    if(state.stage==="BEFORE"){
+      parts.push(
+        "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
+        "; Singles "+inventoryVal("biSingles")+
+        "; RTE "+inventoryVal("biRTE")
+      );
+    }
+
+    $("remarks").value=parts.join(" | ");
+    draw();
+  }
+
+  $("remarkSelect").addEventListener("change", composeRemarks);
+  $("otherRemarks").addEventListener("input", composeRemarks);
+  ["biMingles","biSingles","biRTE"].forEach(function(id){
+    $(id).addEventListener("input", composeRemarks);
+  });
 
   // ---------- photo input (native camera or gallery) ----------
   btnCam.addEventListener("click", function(){ fileCam.click(); });
@@ -593,36 +676,112 @@
     var x=panelX+panelW*0.075, right=W-panelW*0.075, innerW=right-x;
     var unit=Math.min(H/1000,panelW/320);
     var after=state.stage==='AFTER', dt=humanDateTime();
+    var comments=($("remarks").value||"").trim();
+
     ctx.save(); ctx.beginPath(); ctx.rect(panelX,0,panelW,H); ctx.clip();
     ctx.fillStyle='rgba(8,29,52,0.94)';ctx.fillRect(panelX,0,panelW,H);
     ctx.fillStyle='#e0b13a';ctx.fillRect(panelX,0,Math.max(2,3*unit),H);
     ctx.textAlign='left';ctx.textBaseline='middle';
+
     function text(t,y,size,color,weight){
       ctx.font=(weight||700)+' '+(size*unit)+'px Segoe UI, sans-serif';
       ctx.fillStyle=color||'#ffffff';ctx.fillText(t,x,y,innerW);
     }
+
+    function wrapLines(value,maxWidth,maxLines,fontPx){
+      ctx.font='600 '+fontPx+'px Segoe UI, sans-serif';
+      var words=String(value||'').split(/\s+/), lines=[], line='';
+      for(var i=0;i<words.length;i++){
+        var test=line ? line+' '+words[i] : words[i];
+        if(ctx.measureText(test).width<=maxWidth){
+          line=test;
+        }else{
+          if(line) lines.push(line);
+          line=words[i];
+          if(lines.length===maxLines-1) break;
+        }
+      }
+      if(line && lines.length<maxLines) lines.push(line);
+
+      var usedWords=lines.join(' ').split(/\s+/).filter(Boolean).length;
+      if(usedWords<words.length && lines.length){
+        var last=lines.length-1, candidate=lines[last];
+        while(candidate.length>1 && ctx.measureText(candidate+'…').width>maxWidth){
+          candidate=candidate.slice(0,-1);
+        }
+        lines[last]=candidate.replace(/[ ,.;:-]+$/,'')+'…';
+      }
+      return lines;
+    }
+
+    function drawCommentsBox(top,bottom){
+      if(!comments) return;
+      var boxY=top, boxH=bottom-top;
+      ctx.fillStyle='rgba(3,16,31,.48)';
+      rr(ctx,x,boxY,innerW,boxH,10*unit); ctx.fill();
+
+      ctx.fillStyle='rgba(224,177,58,.72)';
+      ctx.fillRect(x,boxY,innerW,Math.max(1,2*unit));
+
+      text('COMMENTS',boxY+boxH*.13,18,'#f2d27a',800);
+
+      var fontPx=Math.max(12,22*unit);
+      var lineH=Math.max(18,31*unit);
+      var maxLines=Math.max(3,Math.floor((boxH-boxH*.27)/lineH));
+      var lines=wrapLines(comments,innerW-16*unit,maxLines,fontPx);
+
+      ctx.font='600 '+fontPx+'px Segoe UI, sans-serif';
+      ctx.fillStyle='#ffffff';
+      ctx.textAlign='left';
+      ctx.textBaseline='top';
+      var yy=boxY+boxH*.23;
+      lines.forEach(function(line){
+        ctx.fillText(line,x+8*unit,yy,innerW-16*unit);
+        yy+=lineH;
+      });
+      ctx.textBaseline='middle';
+    }
+
     text('TROPIKIND',H*.055,34,'#f2d27a',800);
     text('DELIVERY MONITORING',H*.093,15);
     text(state.branch||'—',H*.155,28,'#ffffff',800);
     text(state.stage,H*.225,38,after?'#5be08a':'#ffab2e',800);
     text(dt.date,H*.28,22);text(dt.time,H*.317,22);
+
     if(after){
       var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});
-      var block=H*.46/Math.max(3,active.length);
+      // When comments exist, compact the product area slightly so comments remain readable.
+      var productSpan=comments ? H*.31 : H*.46;
+      var block=productSpan/Math.max(3,active.length);
+
       active.forEach(function(sku,i){
         var y=H*.39+i*block,c=counts[sku]||{};
-        ctx.fillStyle='rgba(224,177,58,.55)';ctx.fillRect(x,y-H*.028,innerW,Math.max(1,unit));
+        ctx.fillStyle='rgba(224,177,58,.55)';
+        ctx.fillRect(x,y-H*.028,innerW,Math.max(1,unit));
         text(sku.toUpperCase(),y,29,'#f2d27a',800);
+
         function metric(label,value,yy,color){
-          ctx.textAlign='left';ctx.font='700 '+(24*unit)+'px Segoe UI, sans-serif';ctx.fillStyle=color;
+          ctx.textAlign='left';
+          ctx.font='700 '+(24*unit)+'px Segoe UI, sans-serif';
+          ctx.fillStyle=color;
           ctx.fillText(label,x,yy,innerW*.48);
-          ctx.textAlign='right';ctx.font='800 '+(42*unit)+'px Segoe UI, sans-serif';
-          ctx.fillText(String(value==null||value===''?'0':value),right,yy,innerW*.44);ctx.textAlign='left';
+
+          ctx.textAlign='right';
+          ctx.font='800 '+(42*unit)+'px Segoe UI, sans-serif';
+          ctx.fillText(String(value==null||value===''?'0':value),right,yy,innerW*.44);
+          ctx.textAlign='left';
         }
+
         metric('Refill',c.refill,y+block*.34,'#5be08a');
         metric('BO',c.bo,y+block*.69,'#ffab6b');
       });
+
+      if(comments) drawCommentsBox(H*.70,H*.835);
+    }else{
+      // BEFORE: use the large middle area for readable visit comments.
+      if(comments) drawCommentsBox(H*.43,H*.82);
     }
+
     text('Staff: '+(state.staff||'—'),H*.887,23);
     text('CODE: '+visitCode,H*.957,34,'#f2d27a',800);
     ctx.restore();
