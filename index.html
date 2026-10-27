@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TropiKind Field Camera v36.1</title>
+<title>TropiKind Field Camera v36.3</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TropiKind">
@@ -1387,8 +1387,34 @@
       label.className='sync-status '+(mediaLastError?'err':jobs.length?'wait':'ok');
     }catch(err){$('mediaStatus').textContent='Photos can save locally, but Drive queue is unavailable: '+err.message;}
   }
+  // v36.3: Drive copy is resized before upload. Full-resolution 12–50 MP camera JPEGs
+  // became 5–20 MB base64 POST bodies, which mobile Safari/Android drop mid-transfer
+  // ("Load failed"). Local gallery/download copies stay full resolution.
+  var UPLOAD_MAX_EDGE=2048, UPLOAD_QUALITY=0.82, UPLOAD_KEEP_BYTES=1.5*1024*1024;
+  function shrinkForUpload(blob){
+    return new Promise(function(resolve){
+      try{
+        var url=URL.createObjectURL(blob),img=new Image();
+        img.onload=function(){
+          var w=img.naturalWidth,h=img.naturalHeight;URL.revokeObjectURL(url);
+          if(!w||!h){resolve(blob);return;}
+          var s=Math.min(1,UPLOAD_MAX_EDGE/Math.max(w,h));
+          if(s>=1&&blob.size<=UPLOAD_KEEP_BYTES){resolve(blob);return;}
+          var c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*s));c.height=Math.max(1,Math.round(h*s));
+          var ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+          ctx.drawImage(img,0,0,c.width,c.height);
+          c.toBlob(function(b){c.width=0;c.height=0;resolve(b&&b.size&&b.size<blob.size?b:blob);},'image/jpeg',UPLOAD_QUALITY);
+        };
+        img.onerror=function(){URL.revokeObjectURL(url);resolve(blob);};
+        img.src=url;
+      }catch(e){resolve(blob);}
+    });
+  }
+  function fmtMB(bytes){return (bytes/1048576).toFixed(bytes<1048576?2:1)+' MB';}
   async function queueVisitMedia(items,record,code){
     try{
+      var upBlobs=await Promise.all(items.map(function(item){return shrinkForUpload(item.blob);}));
+      items=items.map(function(item,i){return {blob:upBlobs[i],name:item.name};});
       for(var i=0;i<items.length;i++){
         if(items[i].blob.size>18*1024*1024)throw new Error('Photo exceeds the 18 MB Drive upload limit. Local saving still works.');
       }
@@ -1408,12 +1434,29 @@
   function blobBase64(blob){
     return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(String(reader.result).split(',')[1]);};reader.onerror=function(){reject(reader.error);};reader.readAsDataURL(blob);});
   }
-  async function mediaRequest(url,payload){
-    var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},120000);
+  async function mediaRequest(url,payload,label){
+    label=label||'Apps Script';
+    var controller=new AbortController(),timedOut=false,timer=setTimeout(function(){timedOut=true;controller.abort();},120000);
     try{
-      var res=await fetch(url,{method:payload?'POST':'GET',cache:'no-store',signal:controller.signal,
-        headers:payload?{'Content-Type':'text/plain;charset=utf-8'}:undefined,body:payload?JSON.stringify(payload):undefined});
-      var data=await res.json();if(!data||!data.ok)throw new Error(data&&data.error||'Drive upload refused');return data;
+      var res;
+      try{
+        res=await fetch(url,{method:payload?'POST':'GET',cache:'no-store',redirect:'follow',signal:controller.signal,
+          headers:payload?{'Content-Type':'text/plain;charset=utf-8'}:undefined,
+          body:payload?JSON.stringify(payload):undefined});
+      }catch(netErr){
+        if(timedOut)throw new Error(label+' timed out after 120 s (slow signal?). Photo kept for retry.');
+        throw new Error(label+' failed: '+(netErr&&netErr.message?netErr.message:'network/load error')+
+          '. Either the connection dropped or Apps Script crashed before replying — check Apps Script › Executions.');
+      }
+      if(!res)throw new Error(label+': Apps Script returned no response.');
+      var text=await res.text();
+      var data;
+      try{data=JSON.parse(text);}
+      catch(parseErr){
+        throw new Error(label+': Apps Script returned a non-JSON response (HTTP '+res.status+') — usually a login/permission page; check deployment access is "Anyone" and Drive is authorized.');
+      }
+      if(!data||!data.ok)throw new Error(data&&data.error||('Drive upload refused (HTTP '+res.status+')'));
+      return data;
     }finally{clearTimeout(timer);}
   }
   async function syncMediaQueue(){
@@ -1423,16 +1466,19 @@
     try{
       var jobs=await mediaStore('all');if(!jobs.length)return;
       jobs.sort(function(a,b){return a.createdAt-b.createdAt||a.id.localeCompare(b.id);});
-      var url=syncURL(),token=syncTok(),service=await mediaRequest(url);
-      if(service.mediaVersion!==2||!service.receiptSupported)throw new Error('Deploy the updated Delivery.gs first, then tap Upload / retry photos.');
+      var url=syncURL(),token=syncTok();
       for(var i=0;i<jobs.length;i++){
         var job=jobs[i];
-        // Ensure the original camera key exists before linking an uploaded file.
-        var ack=await mediaRequest(url,{token:token,device:job.record.device,records:[job.record]});
+        // Use POST as the connectivity/capability check. This avoids Safari/PWA
+        // "Load failed" errors from a preliminary cross-origin GET to Apps Script.
+        var ack=await mediaRequest(url,{token:token,device:job.record.device,records:[job.record]},'Step 1/2 visit record sync');
         if(!ack.keys||ack.keys.indexOf(job.record.key)<0)throw new Error('Visit sync was not acknowledged; photos remain queued.');
+        if(ack.mediaVersion!==2||!ack.receiptSupported)throw new Error('Deploy the updated Delivery.gs first, then tap Upload / retry photos.');
+        var upBlob=await shrinkForUpload(job.blob); // also shrinks jobs queued by v36.2 and older
         var reply=await mediaRequest(url,{action:'uploadMedia',token:token,cameraKey:job.record.key,
           mediaType:job.mediaType,mimeType:'image/jpeg',photoCode:job.photoCode,expectedReceipt:job.expectedReceipt,
-          branch:job.record.branch,when:job.record.when,data:await blobBase64(job.blob)});
+          branch:job.record.branch,when:job.record.when,data:await blobBase64(upBlob)},
+          'Step 2/2 '+job.mediaType+' upload ('+fmtMB(upBlob.size)+', '+(i+1)+' of '+jobs.length+')');
         if(reply.cameraKey!==job.record.key||reply.mediaType!==job.mediaType||!reply.fileUrl)throw new Error('Incomplete Drive upload response; photo kept for retry.');
         await mediaStore('delete',job.id);
       }

@@ -88,3 +88,40 @@ If the old PWA is installed:
 2. Open the site once while online.
 3. Reload once. If Android still shows the old cached app, close/reopen the PWA
    or clear only the site's cached data and reopen.
+
+
+v36.2 HOTFIX — DRIVE UPLOAD "LOAD FAILED"
+----------------------------------------
+Fixes the remaining:
+  Drive upload pending: Load failed
+
+Change:
+- Removed the preliminary cross-origin GET health-check to Apps Script.
+- Photo queue now uses the normal POST record-sync call as the connectivity and
+  backend capability check.
+- This is more reliable in Safari/iOS/PWA environments where the preliminary
+  GET can fail with the generic "Load failed" message even when POST works.
+- Added clearer diagnostics if Apps Script returns no response or non-JSON.
+- Service worker cache bumped to tropikind-camera-v36-2.
+
+No connection settings changed:
+Apps Script /exec:
+https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec
+Token: tropikind2026
+
+
+v36.3 HOTFIX — DRIVE UPLOAD "LOAD FAILED" (PHOTO SIZE)
+-----------------------------------------------------
+Root cause addressed:
+- Photos were uploaded at full camera resolution (JPEG q0.92). On 12–50 MP phones
+  that is a 5–20 MB base64 POST in one request. On field mobile data the transfer
+  drops, or Apps Script fails before replying, and Safari/Android report only
+  "Load failed".
+
+Changes (frontend only, backend unchanged):
+- Drive copy is resized to 2048 px long edge, JPEG q0.82 (~0.4–1 MB) before queueing.
+  Local gallery/download copy remains full resolution.
+- Photos already queued by v36.2 are also resized at upload time.
+- Errors now name the failing step (1/2 record sync or 2/2 photo upload),
+  the upload size, and distinguish timeout vs dropped connection vs non-JSON reply.
+- Service worker cache bumped to tropikind-camera-v36-3.
