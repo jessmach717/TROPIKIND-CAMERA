@@ -23,3 +23,6 @@ New version > Deploy. Keep the same /exec URL.
 Replace GitHub index.html and sw.js, then reload/update the PWA.
 
 CACHE: tropikind-camera-v31
+
+- v32: Added Marlon and NepNep to Delivery Staff list; staff list remains alphabetical.
+- Cache: tropikind-camera-v32.
