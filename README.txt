@@ -63,3 +63,28 @@ Replace the current deployed index.html/sw.js with v36.
 Apps Script:
 If already using the v33/v35 backend, no backend logic change is required for this UI revision.
 If not, use the included Tropikind_Delivery_Final.gs and deploy a New Version under the SAME Web App deployment so the /exec URL stays unchanged.
+
+
+v36.1 HOTFIX — SERVICE WORKER / FETCH
+-------------------------------------
+Fixed browser error:
+  FetchEvent / respondWith returned a null or invalid response.
+
+Cause:
+The old service worker was intercepting cross-origin GET requests, including the
+Google Apps Script /exec health check. If that fetch failed, its catch path could
+resolve without a valid Response.
+
+Fix:
+- Service worker now handles SAME-ORIGIN app files only.
+- Google Apps Script and Google Drive requests bypass the service worker and go
+  directly to the network.
+- All intercepted fetch paths now return a valid Response.
+- Cache renamed to tropikind-camera-v36-1 so older cached service-worker content
+  is removed during activation.
+
+If the old PWA is installed:
+1. Publish/upload v36.1 files.
+2. Open the site once while online.
+3. Reload once. If Android still shows the old cached app, close/reopen the PWA
+   or clear only the site's cached data and reopen.

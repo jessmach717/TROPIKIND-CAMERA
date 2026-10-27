@@ -1,45 +1,83 @@
-const CACHE = 'tropikind-camera-v33';
+const CACHE = 'tropikind-camera-v36-1';
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './maskable-512.png'];
 
 self.addEventListener('install', function(e){
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(CORE); }).catch(function(){}));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(function(c){ return c.addAll(CORE); })
+      .catch(function(){})
+  );
 });
 
 self.addEventListener('activate', function(e){
   e.waitUntil(
     caches.keys().then(function(keys){
-      return Promise.all(keys.map(function(k){ if(k!==CACHE) return caches.delete(k); }));
+      return Promise.all(keys.map(function(k){
+        if(k !== CACHE && k.indexOf('tropikind-camera-') === 0) return caches.delete(k);
+      }));
     }).then(function(){ return self.clients.claim(); })
   );
 });
 
 self.addEventListener('fetch', function(e){
+  // IMPORTANT:
+  // Never intercept Google Apps Script / Google Drive / other cross-origin requests.
+  // The Field Camera must talk to the deployed /exec endpoint directly.
   if(e.request.method !== 'GET') return;
-  // Refresh app documents online; retain the cached app for offline use.
+
   var url = new URL(e.request.url);
-  if(url.origin === self.location.origin &&
-     (e.request.mode === 'navigate' || url.pathname === new URL('./index.html', self.registration.scope).pathname)){
-    e.respondWith(fetch(e.request, {cache:'no-cache'}).then(function(res){
-      if(!res.ok) throw new Error('App document unavailable');
-      var copy=res.clone();
-      e.waitUntil(caches.open(CACHE).then(function(c){ return c.put(e.request,copy); }).catch(function(){}));
-      return res;
-    }).catch(function(){
-      return caches.match(e.request).then(function(cached){
-        return cached || caches.match('./index.html');
-      });
-    }));
+  if(url.origin !== self.location.origin) return;
+
+  // Network-first for the app document, with cached offline fallback.
+  if(e.request.mode === 'navigate' ||
+     url.pathname === new URL('./index.html', self.registration.scope).pathname){
+    e.respondWith(
+      fetch(e.request, {cache:'no-cache'})
+        .then(function(res){
+          if(!res || !res.ok) throw new Error('App document unavailable');
+          var copy = res.clone();
+          e.waitUntil(
+            caches.open(CACHE)
+              .then(function(c){ return c.put(e.request, copy); })
+              .catch(function(){})
+          );
+          return res;
+        })
+        .catch(function(){
+          return caches.match(e.request).then(function(cached){
+            if(cached) return cached;
+            return caches.match('./index.html').then(function(fallback){
+              return fallback || new Response('Offline', {
+                status: 503,
+                statusText: 'Offline',
+                headers: {'Content-Type':'text/plain;charset=utf-8'}
+              });
+            });
+          });
+        })
+    );
     return;
   }
+
+  // Cache-first only for same-origin static app assets.
   e.respondWith(
     caches.match(e.request).then(function(cached){
-      return cached || fetch(e.request).then(function(res){
-        var copy = res.clone();
-        caches.open(CACHE).then(function(c){ c.put(e.request, copy); }).catch(function(){});
+      if(cached) return cached;
+      return fetch(e.request).then(function(res){
+        if(res && res.ok){
+          var copy = res.clone();
+          e.waitUntil(
+            caches.open(CACHE)
+              .then(function(c){ return c.put(e.request, copy); })
+              .catch(function(){})
+          );
+        }
         return res;
-      }).catch(function(){ return cached; });
+      }).catch(function(){
+        return new Response('', {status:503, statusText:'Offline'});
+      });
     })
   );
 });
