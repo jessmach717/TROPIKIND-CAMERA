@@ -407,6 +407,14 @@
     }
   }
 
+
+  /* Compact remarks + code display */
+  .remarks-checklist{max-height:270px;overflow:auto}
+  .remark-check{padding:9px 10px;font-size:13px}
+  .remark-check input{width:19px;height:19px;min-width:19px}
+  #visitCodeLabel{font-size:12px !important;letter-spacing:.04em !important}
+  .visit-code-line{font-size:11px !important;padding:8px 10px !important}
+
 </style>
 </head>
 <body>
@@ -517,7 +525,7 @@
         <label class="remark-check"><input type="checkbox" name="remarkOption" value="Soft / Over ripe bananas"><span>Soft / Over ripe bananas</span></label>
         <label class="remark-check"><input type="checkbox" name="remarkOption" value="Slow fruit movement"><span>Slow fruit movement</span></label>
       </div>
-      <p class="save-note">Tap as many remarks as needed.</p>
+      <p class="save-note">Select up to 3 remarks.</p>
     </div>
 
     <div class="field">
@@ -725,6 +733,8 @@
   var seg=$("seg");
   function setStage(v){
     state.stage=v; LS.set("tk_stage",v);
+    var rf=$("remarksField");
+    if(rf) rf.style.display=(v==="BEFORE")?"":"none";
     Array.prototype.forEach.call(seg.querySelectorAll("button"),function(b){
       b.setAttribute("aria-pressed", b.dataset.v===v ? "true":"false");
     });
@@ -807,30 +817,41 @@
   }
 
   function composeRemarks(){
+    // Remarks belong to BEFORE only.
+    if(state.stage!=="BEFORE"){
+      $("remarks").value="";
+      draw();
+      return;
+    }
+
     var parts=[];
     var selected=Array.prototype.map.call(
       document.querySelectorAll('input[name="remarkOption"]:checked'),
       function(o){ return o.value.trim(); }
-    ).filter(Boolean);
+    ).filter(Boolean).slice(0,3);
     var other=$("otherRemarks").value.trim();
 
     selected.forEach(function(v){ parts.push(v); });
     if(other) parts.push(other);
 
-    if(state.stage==="BEFORE"){
-      parts.push(
-        "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
-        "; Singles "+inventoryVal("biSingles")+
-        "; RTE "+inventoryVal("biRTE")
-      );
-    }
+    parts.push(
+      "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
+      "; Singles "+inventoryVal("biSingles")+
+      "; RTE "+inventoryVal("biRTE")
+    );
 
     $("remarks").value=parts.join(" | ");
     draw();
   }
 
   $("remarkSelect").addEventListener("change", function(e){
-    if(e.target && e.target.name==="remarkOption") composeRemarks();
+    if(!(e.target && e.target.name==="remarkOption")) return;
+    var checked=document.querySelectorAll('input[name="remarkOption"]:checked');
+    if(checked.length>3){
+      e.target.checked=false;
+      toast("Maximum 3 remarks only");
+    }
+    composeRemarks();
   });
   $("otherRemarks").addEventListener("input", composeRemarks);
   ["biMingles","biSingles","biRTE"].forEach(function(id){
@@ -929,7 +950,7 @@
     var x=panelX+panelW*0.065, right=W-panelW*0.06, innerW=right-x;
     var unit=Math.min(H/860,panelW/260);
     var after=state.stage==='AFTER', dt=humanDateTime();
-    var comments=($("remarks").value||"").trim();
+    var comments=state.stage==='BEFORE' ? ($("remarks").value||"").trim() : '';
 
     ctx.save(); ctx.beginPath(); ctx.rect(panelX,0,panelW,H); ctx.clip();
     ctx.fillStyle='rgba(8,29,52,0.94)';ctx.fillRect(panelX,0,panelW,H);
@@ -1036,7 +1057,7 @@
     }
 
     text('Staff: '+(state.staff||'—'),H*.895,24);
-    text('CODE: '+visitCode,H*.962,36,'#f2d27a',800);
+    text('CODE: '+visitCode,H*.962,24,'#f2d27a',800);
     ctx.restore();
   }
 

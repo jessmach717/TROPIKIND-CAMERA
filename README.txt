@@ -1,22 +1,19 @@
-TROPIKIND v25 WORKING — PROFESSIONAL UI REFRESH
+TROPIKIND v25 WORKING — PROFESSIONAL UI v5
 
-UI changes only:
-- Beginning Inventory title is larger, bold, and clearer.
-- Beginning Inventory outer border is thicker and more prominent.
-- Clearer visual hierarchy for SKU name, unit label, and quantity input.
-- Quantity inputs are larger and easier for field encoders to use.
-- Remarks area is visually cleaner.
-- Main Save action is slightly more prominent.
+UI / operator changes only:
+- Maximum 3 standard remarks can be selected.
+- Remarks panel is more compact to reduce screen crowding.
+- Visit Code display is smaller.
+- Photo stamp CODE text is smaller.
+- Remarks are BEFORE-only.
+- AFTER clears and hides remarks and does not stamp remarks.
 
 UNCHANGED:
-- Beginning Inventory data handling
-- Multiple remarks data handling
-- Staff list and users
-- Store list
-- Google Sheet link / Apps Script connection
+- Beginning Inventory handling
+- Staff/users
+- Store master list
+- Google Sheet / Apps Script link
 - Token
-- Google Drive upload logic
-- v25/v24 working upload engine
-- Existing data fields and payload structure
-
-All files are in one folder/root level.
+- Drive upload logic
+- Proven v25/v24 working backend
+- Existing data payload structure
