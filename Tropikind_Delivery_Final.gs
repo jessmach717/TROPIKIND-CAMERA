@@ -253,116 +253,93 @@ function uploadMedia_(payload, requestId) {
   const cameraKey = String(payload.cameraKey || '').trim();
   const mediaType = String(payload.mediaType || '').trim().toLowerCase();
   const photoCode = String(payload.photoCode || '').trim();
-  const rawData = String(payload.data || '');
+  const base64 = String(payload.data || '').trim();
+
   if (!cameraKey) throw new Error('cameraKey is required.');
   if (mediaType !== 'photo' && mediaType !== 'receipt') {
     throw new Error('mediaType must be photo or receipt.');
   }
-  if (!rawData) throw new Error('No media data supplied.');
+  if (!base64) throw new Error('No media data supplied.');
 
-  // Accept plain base64 and data:image/...;base64,... URLs.
-  // v36.3: only copy the (large) string when a prefix/whitespace is actually present,
-  // to keep memory close to the v24 backend on big photos.
-  const isDataUrl = rawData.slice(0, 5).toLowerCase() === 'data:';
-  let base64 = isDataUrl ? rawData.slice(rawData.indexOf(',') + 1) : rawData;
-  if (/\s/.test(base64.slice(0, 200))) base64 = base64.replace(/\s/g, '');
-  const mimeFromDataUrl = isDataUrl ? /^data:([^;,]+);base64,/i.exec(rawData.slice(0, 100)) : null;
-  const mimeType = String(payload.mimeType || (mimeFromDataUrl && mimeFromDataUrl[1]) || 'image/jpeg');
+  // Stable v24-style path: active spreadsheet -> locate record -> decode -> Drive -> write links.
+  // Keep this intentionally simple; the frontend already resizes the Drive copy before POST.
+  const sheet = getTargetSheet_();
+  const headers = ensureHeaders_(sheet);
+  const map = headerMap_(headers);
+  const row = findRowByCameraKey_(sheet, map, cameraKey);
+  if (!row) {
+    throw new Error('Camera Key not found in Tropikind Cam Delivery. Sync the visit record first.');
+  }
+
+  const parsedBranch = parseBranch_(payload.branch || '');
+  const when = parseVisitDate_(payload.when);
+  const root = DriveApp.getFolderById(TK.ROOT_FOLDER_ID);
+  const dateFolder = getOrCreateFolder_(root, formatDateFolder_(when));
+  const branchFolder = getOrCreateFolder_(dateFolder,
+    sanitizeFolderName_(parsedBranch.outlet || payload.branch || 'Unknown Store'));
+
+  const rowStage = String(getCellByHeader_(sheet, row, map, 'Stage') || '').trim().toUpperCase();
+  const mediaRoot = getOrCreateFolder_(branchFolder, mediaType === 'receipt' ? 'RECEIPT' : 'PHOTO');
+  const typeFolder = mediaType === 'receipt'
+    ? mediaRoot
+    : getOrCreateFolder_(mediaRoot,
+        rowStage === 'BEFORE' ? 'BEFORE' : rowStage === 'AFTER' ? 'AFTER' : 'OTHER');
+
+  const mimeType = String(payload.mimeType || 'image/jpeg');
   if (!/^image\/(jpeg|png|webp)$/i.test(mimeType)) {
     throw new Error('Unsupported image MIME type: ' + mimeType);
   }
+  const ext = extensionForMime_(mimeType);
+  const code = photoCode || 'NO-CODE';
+  const fileName = mediaType === 'receipt'
+    ? 'TROPIKIND_DR-BO_' + sanitizeFileName_(code) + ext
+    : 'TROPIKIND_' + sanitizeFileName_(parsedBranch.outlet || 'STORE') + '_' +
+      sanitizeFileName_(rowStage || 'PHOTO') + '_' + sanitizeFileName_(code) + ext;
+
   let bytes;
-  try { bytes = Utilities.base64Decode(base64); }
-  catch (err) { throw new Error('Invalid base64 image data.'); }
-  if (!bytes.length) throw new Error('Decoded image is empty.');
-  console.log('[%s] MEDIA decoded key=%s type=%s bytes=%s', requestId, cameraKey, mediaType, bytes.length);
-
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) throw new Error('Upload busy. Please retry.');
   try {
-    const sheet = getTargetSheet_();
-    const headers = ensureHeaders_(sheet);
-    const map = headerMap_(headers);
-    let row = findRowByCameraKey_(sheet, map, cameraKey);
-    if (!row) {
-      console.warn('[%s] CAMERA KEY NOT FOUND: %s', requestId, cameraKey);
-      // Never attach a photo to an unrelated delivery row.
-      throw new Error('Camera Key not found: ' + cameraKey + '. Sync the delivery record first, then retry photo upload.');
-    }
-    console.log('[%s] MATCHED SHEET ROW %s', requestId, row);
-    const parsedBranch = parseBranch_(payload.branch || '');
-    const when = parseVisitDate_(payload.when);
-    const root = DriveApp.getFolderById(TK.ROOT_FOLDER_ID);
-    const dateFolder = getOrCreateFolder_(root, formatDateFolder_(when));
-    const branchFolder = getOrCreateFolder_(dateFolder,
-      sanitizeFolderName_(parsedBranch.outlet || payload.branch || 'Unknown Store'));
-    const rowStage = String(getCellByHeader_(sheet, row, map, 'Stage') || '').trim().toUpperCase();
-    const mediaRoot = getOrCreateFolder_(branchFolder, mediaType === 'receipt' ? 'RECEIPT' : 'PHOTO');
-    const typeFolder = mediaType === 'receipt'
-      ? mediaRoot
-      : getOrCreateFolder_(mediaRoot, rowStage === 'BEFORE' ? 'BEFORE' : rowStage === 'AFTER' ? 'AFTER' : 'OTHER');
-
-    const code = photoCode || 'NO-CODE';
-    const ext = extensionForMime_(mimeType);
-    const fileName = mediaType === 'receipt'
-      ? 'TROPIKIND_DR-BO_' + sanitizeFileName_(code) + '_' + sanitizeFileName_(cameraKey).slice(0, 35) + ext
-      : 'TROPIKIND_' + sanitizeFileName_(parsedBranch.outlet || 'STORE') + '_' +
-        sanitizeFileName_(rowStage || 'PHOTO') + '_' +
-        sanitizeFileName_(code) + '_' + sanitizeFileName_(cameraKey).slice(0, 35) + ext;
-
-    const linkHeader = mediaType === 'receipt'
-      ? 'Receipt Link'
-      : rowStage === 'BEFORE' ? 'Before Photo Link'
-      : rowStage === 'AFTER' ? 'After Photo Link'
-      : 'Photo Link';
-    // If the request is retried, return the already saved link rather than creating duplicates.
-    const prior = getCellByHeader_(sheet, row, map, linkHeader) ||
-      (mediaType === 'photo' ? getCellByHeader_(sheet, row, map, 'Photo Link') : '');
-    if (prior) {
-      console.log('[%s] ALREADY LINKED row=%s type=%s', requestId, row, mediaType);
-      return { ok: true, cameraKey: cameraKey, mediaType: mediaType, photoCode: code,
-        fileUrl: prior, folderUrl: getCellByHeader_(sheet, row, map, 'Drive Folder Link'),
-        alreadyUploaded: true, mediaVersion: TK.MEDIA_VERSION, receiptSupported: true };
-    }
-
-    const blob = Utilities.newBlob(bytes, mimeType, fileName);
-    const file = typeFolder.createFile(blob);
-    const fileUrl = file.getUrl();
-    console.log('[%s] DRIVE FILE CREATED id=%s url=%s', requestId, file.getId(), fileUrl);
-    try {
-      setCellByHeader_(sheet, row, map, linkHeader, fileUrl);
-
-      if (mediaType === 'receipt') {
-        setCellByHeader_(sheet, row, map, 'Receipt Link', fileUrl);
-        setCellByHeader_(sheet, row, map, 'Receipt Photo Link', fileUrl);
-      } else {
-        setCellByHeader_(sheet, row, map, 'Photo Link', fileUrl);
-        if (rowStage === 'BEFORE') setCellByHeader_(sheet, row, map, 'Before Photo Link', fileUrl);
-        if (rowStage === 'AFTER') setCellByHeader_(sheet, row, map, 'After Photo Link', fileUrl);
-      }
-
-      setCellByHeader_(sheet, row, map, 'Visit Code', code);
-      setCellByHeader_(sheet, row, map, 'Drive Folder Link', branchFolder.getUrl());
-      const photoLink = getCellByHeader_(sheet, row, map, 'Photo Link');
-      const receiptLink = getCellByHeader_(sheet, row, map, 'Receipt Link');
-      let status = photoLink && receiptLink ? 'Photo + receipt uploaded' :
-        receiptLink ? 'Receipt uploaded' : 'Photo uploaded';
-      if (payload.expectedReceipt && !receiptLink) status = 'Waiting for receipt';
-      setCellByHeader_(sheet, row, map, 'Media Upload Status', status);
-      SpreadsheetApp.flush();
-      const written = getCellByHeader_(sheet, row, map, linkHeader);
-      if (written !== fileUrl) throw new Error('Sheet link verification failed.');
-      console.log('[%s] VERIFIED SHEET LINK row=%s column=%s', requestId, row, linkHeader);
-    } catch (err) {
-      console.error('[%s] DRIVE FILE EXISTS but sheet write failed: %s', requestId, errorMessage_(err));
-      throw new Error('Photo saved to Drive but Sheet link failed. File URL: ' + fileUrl + '. ' + errorMessage_(err));
-    }
-    return { ok: true, cameraKey: cameraKey, mediaType: mediaType, photoCode: code,
-      fileUrl: fileUrl, folderUrl: branchFolder.getUrl(), mediaVersion: TK.MEDIA_VERSION,
-      receiptSupported: true };
-  } finally {
-    lock.releaseLock();
+    bytes = Utilities.base64Decode(base64);
+  } catch (err) {
+    throw new Error('Invalid base64 image data.');
   }
+  if (!bytes || !bytes.length) throw new Error('Decoded image is empty.');
+
+  const blob = Utilities.newBlob(bytes, mimeType, fileName);
+  const file = typeFolder.createFile(blob);
+  const fileUrl = file.getUrl();
+
+  if (mediaType === 'receipt') {
+    setCellByHeader_(sheet, row, map, 'Receipt Link', fileUrl);
+    setCellByHeader_(sheet, row, map, 'Receipt Photo Link', fileUrl);
+  } else {
+    setCellByHeader_(sheet, row, map, 'Photo Link', fileUrl);
+    if (rowStage === 'BEFORE') setCellByHeader_(sheet, row, map, 'Before Photo Link', fileUrl);
+    if (rowStage === 'AFTER') setCellByHeader_(sheet, row, map, 'After Photo Link', fileUrl);
+  }
+
+  setCellByHeader_(sheet, row, map, 'Visit Code', code);
+  setCellByHeader_(sheet, row, map, 'Drive Folder Link', branchFolder.getUrl());
+
+  const photoLink = getCellByHeader_(sheet, row, map, 'Photo Link');
+  const receiptLink = getCellByHeader_(sheet, row, map, 'Receipt Link');
+  let status = photoLink && receiptLink ? 'Photo + receipt uploaded' :
+    receiptLink ? 'Receipt uploaded' : 'Photo uploaded';
+  if (payload.expectedReceipt && !receiptLink) status = 'Waiting for receipt';
+  setCellByHeader_(sheet, row, map, 'Media Upload Status', status);
+
+  SpreadsheetApp.flush();
+  console.log('[%s] DRIVE UPLOAD OK row=%s type=%s bytes=%s', requestId, row, mediaType, bytes.length);
+
+  return {
+    ok: true,
+    cameraKey: cameraKey,
+    mediaType: mediaType,
+    photoCode: code,
+    fileUrl: fileUrl,
+    folderUrl: branchFolder.getUrl(),
+    mediaVersion: TK.MEDIA_VERSION,
+    receiptSupported: true
+  };
 }
 
 /* -------------------- SHEET SAFETY -------------------- */
@@ -524,14 +501,9 @@ function parseBranch_(branch) {
 /* -------------------- STORE REFILL TARGETS / WEEKLY SETS -------------------- */
 
 function getSpreadsheet_() {
-  // v36.3: same access path as the working v24 backend. A bound script only
-  // needs the spreadsheets.currentonly scope in appsscript.json; openById needs
-  // the full spreadsheets scope and fails under the v24 manifest. openById is
-  // kept only as a fallback for a standalone (non-bound) project.
-  const active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) return active;
-  if (TK.SPREADSHEET_ID) return SpreadsheetApp.openById(TK.SPREADSHEET_ID);
-  return null;
+  // Stable bound-script access, matching the working v24 deployment and
+  // appsscript.json scope: spreadsheets.currentonly.
+  return SpreadsheetApp.getActiveSpreadsheet();
 }
 
 function targetSheetExists_() {
@@ -872,4 +844,22 @@ function diagnoseTropikind() {
     hm['Camera Key'] + 1);
   console.log('Store refill target tab exists: %s', targetSheetExists_());
   return 'Diagnostics completed. Check Execution log.';
+}
+
+
+/** Safe diagnostic: verifies the exact sheet and Drive folder access without uploading a photo. */
+function testDriveUploadAccess() {
+  const ss = getSpreadsheet_();
+  if (!ss) throw new Error('No active spreadsheet. This Apps Script must be bound to the Tropikind workbook.');
+  const sheet = getTargetSheet_();
+  const root = DriveApp.getFolderById(TK.ROOT_FOLDER_ID);
+  const result = {
+    spreadsheet: ss.getName(),
+    sheet: sheet.getName(),
+    driveFolder: root.getName(),
+    driveFolderId: root.getId(),
+    mediaVersion: TK.MEDIA_VERSION
+  };
+  console.log(JSON.stringify(result));
+  return result;
 }
