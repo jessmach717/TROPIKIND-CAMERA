@@ -1578,7 +1578,7 @@
   }
   window.addEventListener('appinstalled', function(){ if(btn) btn.classList.add('hidden'); });
 
-  var adminToggle=$("adminToggle"), adminTools=$("adminTools");
+  var adminToggle=document.getElementById("adminToggle"), adminTools=document.getElementById("adminTools");
   if(adminToggle && adminTools){
     adminToggle.addEventListener("click",function(){
       var open=adminTools.classList.contains("hidden");

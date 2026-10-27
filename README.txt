@@ -125,3 +125,13 @@ Changes (frontend only, backend unchanged):
 - Errors now name the failing step (1/2 record sync or 2/2 photo upload),
   the upload size, and distinguish timeout vs dropped connection vs non-JSON reply.
 - Service worker cache bumped to tropikind-camera-v36-3.
+
+v36.3 BACKEND COMPATIBILITY FIX (compared against working v24)
+--------------------------------------------------------------
+- getSpreadsheet_() now uses getActiveSpreadsheet() first, like v24. The v24
+  appsscript.json grants only spreadsheets.currentonly + drive, so v36's
+  SpreadsheetApp.openById() was not permitted under that manifest.
+- uploadMedia_ avoids extra full-size copies of the base64 string.
+- appsscript.json from v24 is included unchanged (same scopes, no re-consent).
+Deploy: paste Tropikind_Delivery_Final.gs, keep appsscript.json as v24,
+run diagnoseTropikind() once, then Manage deployments > Edit existing > New version.

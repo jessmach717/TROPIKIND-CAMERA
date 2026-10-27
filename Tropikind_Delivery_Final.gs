@@ -261,8 +261,12 @@ function uploadMedia_(payload, requestId) {
   if (!rawData) throw new Error('No media data supplied.');
 
   // Accept plain base64 and data:image/...;base64,... URLs.
-  const base64 = rawData.replace(/^data:[^,]*;base64,/i, '').replace(/\s/g, '');
-  const mimeFromDataUrl = /^data:([^;,]+);base64,/i.exec(rawData);
+  // v36.3: only copy the (large) string when a prefix/whitespace is actually present,
+  // to keep memory close to the v24 backend on big photos.
+  const isDataUrl = rawData.slice(0, 5).toLowerCase() === 'data:';
+  let base64 = isDataUrl ? rawData.slice(rawData.indexOf(',') + 1) : rawData;
+  if (/\s/.test(base64.slice(0, 200))) base64 = base64.replace(/\s/g, '');
+  const mimeFromDataUrl = isDataUrl ? /^data:([^;,]+);base64,/i.exec(rawData.slice(0, 100)) : null;
   const mimeType = String(payload.mimeType || (mimeFromDataUrl && mimeFromDataUrl[1]) || 'image/jpeg');
   if (!/^image\/(jpeg|png|webp)$/i.test(mimeType)) {
     throw new Error('Unsupported image MIME type: ' + mimeType);
@@ -520,9 +524,14 @@ function parseBranch_(branch) {
 /* -------------------- STORE REFILL TARGETS / WEEKLY SETS -------------------- */
 
 function getSpreadsheet_() {
-  return TK.SPREADSHEET_ID
-    ? SpreadsheetApp.openById(TK.SPREADSHEET_ID)
-    : SpreadsheetApp.getActiveSpreadsheet();
+  // v36.3: same access path as the working v24 backend. A bound script only
+  // needs the spreadsheets.currentonly scope in appsscript.json; openById needs
+  // the full spreadsheets scope and fails under the v24 manifest. openById is
+  // kept only as a fallback for a standalone (non-bound) project.
+  const active = SpreadsheetApp.getActiveSpreadsheet();
+  if (active) return active;
+  if (TK.SPREADSHEET_ID) return SpreadsheetApp.openById(TK.SPREADSHEET_ID);
+  return null;
 }
 
 function targetSheetExists_() {
