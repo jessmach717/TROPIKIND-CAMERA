@@ -164,6 +164,64 @@
   .sync-cfg .hint{font-size:10.5px;color:var(--muted);margin:5px 2px 0;line-height:1.45}
   button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
   .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
+
+  /* ---------- Guided visual hierarchy ---------- */
+  .step-card{margin-top:14px;background:linear-gradient(180deg,rgba(14,37,69,.72),rgba(8,21,37,.82));border:2px solid rgba(224,177,58,.48);border-radius:18px;padding:15px;box-shadow:0 10px 28px rgba(0,0,0,.24)}
+  .step-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(224,177,58,.28)}
+  .step-no{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(160deg,var(--gold-soft),var(--gold));color:#2a1e02;font-weight:900;font-size:17px;box-shadow:0 5px 14px rgba(224,177,58,.18)}
+  .step-copy{min-width:0}
+  .step-title{margin:0;color:#fff;font-size:17px;line-height:1.15;font-weight:900;letter-spacing:.035em;text-transform:uppercase}
+  .step-sub{margin:3px 0 0;color:var(--muted);font-size:11px;line-height:1.35}
+  .subgroup{margin:12px 0 0;padding:12px;border:1px solid rgba(255,255,255,.12);border-left:3px solid rgba(224,177,58,.78);border-radius:13px;background:rgba(6,16,31,.36)}
+  .subgroup:first-of-type{margin-top:0}
+  .subgroup-title{font-size:12px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--gold-soft);margin:0 0 10px}
+  .week-chip{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:10px 12px;border:1px solid rgba(224,177,58,.30);border-radius:11px;background:#081525}
+  .week-chip span:first-child{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .week-chip strong{font-size:18px;color:var(--gold-soft);letter-spacing:.03em}
+  .remarks-box select{min-height:250px;border-color:rgba(224,177,58,.30)}
+  .remarks-box .save-note{text-align:left;margin:7px 2px 0}
+  #beginningInventoryField{border:2px solid rgba(255,171,46,.42);background:rgba(255,171,46,.055)}
+  #beginningInventoryField>label{font-size:14px;font-weight:900;color:#ffd08a;margin-bottom:12px}
+  #beginningInventoryField .sku-row .nm{font-size:18px;min-width:92px}
+  #beginningInventoryField input{font-size:32px;font-weight:900}
+  .capture-shell{padding:12px;border:2px solid rgba(224,177,58,.36);border-radius:16px;background:rgba(2,6,13,.44)}
+  .capture-shell .stage{margin:0}
+  .save-shell{margin-top:14px;padding:14px;border:2px solid rgba(51,194,107,.30);border-radius:16px;background:rgba(51,194,107,.05)}
+  @media (max-width:430px){
+    .step-card{padding:12px}
+    .step-title{font-size:16px}
+    .step-sub{font-size:10.5px}
+    .subgroup{padding:11px}
+    .row{gap:8px}
+    button{padding:13px 10px}
+    .remarks-box select{min-height:220px}
+  }
+
+
+  .remarks-checklist{display:grid;grid-template-columns:1fr;gap:8px;max-height:390px;overflow:auto;padding:4px}
+  .remark-check{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;margin:0;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:#081525;color:#fff;font-size:14px;font-weight:700;line-height:1.35;cursor:pointer}
+  .remark-check input{appearance:none;-webkit-appearance:none;width:22px;height:22px;min-width:22px;border:2px solid rgba(224,177,58,.72);border-radius:6px;background:#06101f;margin:0;display:grid;place-items:center}
+  .remark-check input:checked{background:linear-gradient(160deg,var(--gold-soft),var(--gold));border-color:var(--gold)}
+  .remark-check input:checked::after{content:"✓";color:#2a1e02;font-size:15px;font-weight:900;line-height:1}
+  .remark-check span{padding-top:1px}
+  .photo-stage-status{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 2px}
+  .photo-stage-chip{border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:9px 10px;background:#081525;text-align:center}
+  .photo-stage-chip b{display:block;font-size:12px;letter-spacing:.05em}
+  .photo-stage-chip span{display:block;margin-top:3px;font-size:11px;color:var(--muted)}
+  .photo-stage-chip.ready{border-color:rgba(51,194,107,.45);background:rgba(51,194,107,.08)}
+  .photo-stage-chip.ready span{color:#8ef0b0}
+
+
+  .target-box{margin-top:12px;padding:12px;border:2px solid rgba(51,194,107,.32);border-radius:13px;background:rgba(51,194,107,.055)}
+  .target-title{font-size:12px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:#8ef0b0;margin:0 0 10px}
+  .target-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .target-card{border:1px solid rgba(255,255,255,.12);border-radius:11px;background:#081525;padding:10px}
+  .target-card b{display:block;color:var(--gold-soft);font-size:13px;margin-bottom:7px}
+  .target-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-top:5px}
+  .target-line strong{color:#fff;font-size:16px}
+  .target-suggest strong{color:#8ef0b0;font-size:22px}
+  .target-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+
 </style>
 </head>
 <body>
@@ -178,108 +236,64 @@
     <button id="installBtn" class="install-btn hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>Install</button>
   </header>
 
-  <!-- Preview -->
-  <div class="stage" id="stage">
-    <canvas id="preview"></canvas>
-    <div class="empty" id="empty">
-      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <b>No photo yet</b>
-      <span>Open the camera or upload a shot of the display, then stamp it.</span>
+  <!-- STEP 1 -->
+  <section class="step-card">
+    <div class="step-head">
+      <div class="step-no">1</div>
+      <div class="step-copy"><h2 class="step-title">Visit &amp; Store</h2><p class="step-sub">Set the store, staff, date and visit stage.</p></div>
     </div>
-  </div>
 
-  <!-- capture controls -->
-  <div class="row">
-    <button id="btnCam" class="gold icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take photo</button>
-    <button id="btnUpload" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
-    <button id="btnRetake" class="ghost hidden">Retake</button>
-  </div>
-  <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
-  <input type="file" id="file" accept="image/*" class="hidden">
-
-
-  <div class="panel" id="receiptPanel">
-    <div class="recrow"><strong>Visit code: <span id="visitCodeLabel"></span></strong><button id="newVisit" class="ghost">New visit</button></div>
-    <label>DR/BO receipt photo (optional)</label>
-    <p class="save-note">Take a photo of the actual paper receipt. Keep all four corners visible and avoid glare. Both images use the same code.</p>
-    <div class="row"><button id="receiptTake" class="gold">Take receipt photo</button><button id="receiptUpload" class="ghost">Upload receipt</button></div>
-    <input id="receiptCam" type="file" accept="image/*" capture="environment" class="hidden">
-    <input id="receiptFile" type="file" accept="image/*" class="hidden">
-    <canvas id="receiptPreview" style="display:none;width:100%;height:auto;margin-top:14px;border-radius:10px"></canvas>
-    <div class="row"><button id="receiptSave" class="gold" disabled>Save receipt</button><button id="receiptDownload" class="ghost" disabled>Download receipt</button></div>
-    <div class="row"><button id="receiptRetake" class="ghost" disabled>Retake receipt</button><button id="receiptRemove" class="ghost" disabled>Remove receipt</button></div>
-    <p class="save-note">Receipt saves separately at its original dimensions. Save both images before starting a new visit.</p>
-  </div>
-
-  <!-- details -->
-  <div class="panel">
-    <div class="field">
-      <label>Visit stage</label>
-      <div class="seg" id="seg">
-        <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
-        <button data-v="AFTER" aria-pressed="true">AFTER</button>
+    <div class="subgroup">
+      <div class="subgroup-title">Store information</div>
+      <div class="field">
+        <label for="branch">Store branch</label>
+        <div class="inline"><select id="branch"></select><button class="ghost" id="addBranch">+ Add</button></div>
+      </div>
+      <div class="field">
+        <label for="staff">Delivery staff</label>
+        <div class="inline"><select id="staff"></select><button class="ghost" id="addStaff">+ Add</button></div>
       </div>
     </div>
 
-    <div class="field">
-      <label>Product on display</label>
-      <div class="seg multi" id="prod">
-        <button data-v="Mingles" aria-pressed="true">Mingles</button>
-        <button data-v="Singles" aria-pressed="true">Singles</button>
-        <button data-v="RTE" aria-pressed="true">RTE</button>
+    <div class="subgroup">
+      <div class="subgroup-title">Visit schedule</div>
+      <div class="field">
+        <label for="when">Date &amp; time</label>
+        <div class="inline"><input type="datetime-local" id="when"><button class="ghost" id="btnNow">Now</button></div>
+        <div class="week-chip"><span>Week number</span><strong id="weekNo">—</strong></div>
+      </div>
+      <div class="field">
+        <label>Visit stage</label>
+        <div class="seg" id="seg">
+          <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
+          <button data-v="AFTER" aria-pressed="true">AFTER</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step-card">
+    <div class="step-head">
+      <div class="step-no">2</div>
+      <div class="step-copy"><h2 class="step-title">Inventory &amp; Remarks</h2><p class="step-sub">BEFORE uses Beginning Inventory. AFTER uses Refill and BO.</p></div>
+    </div>
+
+    <div class="subgroup">
+      <div class="subgroup-title">Products</div>
+      <div class="field">
+        <label>Product on display</label>
+        <div class="seg multi" id="prod">
+          <button data-v="Mingles" aria-pressed="true">Mingles</button>
+          <button data-v="Singles" aria-pressed="true">Singles</button>
+          <button data-v="RTE" aria-pressed="true">RTE</button>
+        </div>
       </div>
     </div>
 
-    <div class="field" id="skuCountsField">
-      <label>Refill &amp; BO — per product</label>
-      <div id="skuCounts"></div>
-    </div>
-
-    <div class="field">
-      <label for="branch">Store branch</label>
-      <div class="inline">
-        <select id="branch"></select>
-        <button class="ghost" id="addBranch">+ Add</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="when">Date &amp; time</label>
-      <div class="inline">
-        <input type="datetime-local" id="when">
-        <button class="ghost" id="btnNow">Now</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="staff">Delivery staff</label>
-      <div class="inline">
-        <select id="staff"></select>
-        <button class="ghost" id="addStaff">+ Add</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="remarkSelect">Remarks</label>
-      <select id="remarkSelect">
-        <option value="">Select remark</option>
-        <option>Bad quality fruit</option>
-        <option>Excess supply</option>
-        <option>Good store performance</option>
-        <option>Hot store environment</option>
-        <option>Short supply of banana</option>
-        <option>Short supply of RTE</option>
-        <option>Slow fruit movement</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="otherRemarks">Other remarks (optional)</label>
-      <textarea id="otherRemarks" placeholder="Type other remarks here"></textarea>
-    </div>
-
-    <div class="field" id="beginningInventoryField">
-      <label>Beginning Inventory (BEFORE) — enter existing stock before refill</label>
+    <div class="subgroup" id="beginningInventoryField">
+      <div class="subgroup-title">Beginning Inventory — BEFORE</div>
+      <label>Enter existing stock before refill</label>
       <div class="sku-row">
         <div class="nm">Mingles</div>
         <div class="cell"><small>Packs</small><input id="biMingles" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
@@ -294,45 +308,162 @@
       </div>
     </div>
 
-    <!-- Legacy remarks field retained so CSV and Google Sheet payload format stay unchanged. -->
+    <div class="target-box" id="targetRefillBox">
+      <div class="target-title">Store Target Refill</div>
+      <div class="target-grid">
+        <div class="target-card">
+          <b>Mingles</b>
+          <div class="target-line"><span>Target stock</span><strong id="targetMingles">—</strong></div>
+          <div class="target-line target-suggest"><span>Suggested refill</span><strong id="suggestMingles">—</strong></div>
+        </div>
+        <div class="target-card">
+          <b>RTE</b>
+          <div class="target-line"><span>Target stock</span><strong id="targetRTE">—</strong></div>
+          <div class="target-line target-suggest"><span>Suggested refill</span><strong id="suggestRTE">—</strong></div>
+        </div>
+      </div>
+      <div class="target-note" id="targetRefillNote">Targets are maintained in Google Sheet → Store Refill Targets.</div>
+    </div>
+
+    <div class="subgroup">
+      <div class="subgroup-title">Refill &amp; BO — AFTER</div>
+      <div class="field" id="skuCountsField">
+        <label>Refill &amp; BO — per product</label>
+        <div id="skuCounts"></div>
+      </div>
+    </div>
+
+    <div class="subgroup remarks-box">
+      <div class="subgroup-title">Remarks — select all that apply</div>
+      <div class="field">
+        <label for="remarkSelect">Multiple remarks</label>
+        <div id="remarkSelect" class="remarks-checklist" role="group" aria-label="Select one or more remarks">
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Bad quality fruit"><span>Bad quality fruit</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana color acceptable"><span>Banana color acceptable</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana color not acceptable"><span>Banana color not acceptable</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana overripe"><span>Banana overripe</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana underripe"><span>Banana underripe</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Display needs cleaning"><span>Display needs cleaning</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Display needs rearranging"><span>Display needs rearranging</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Excess supply"><span>Excess supply</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Good store performance"><span>Good store performance</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="High BO observed"><span>High BO observed</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="High customer movement"><span>High customer movement</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Hot store environment"><span>Hot store environment</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Low BO observed"><span>Low BO observed</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Low customer movement"><span>Low customer movement</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Mingles sold out"><span>Mingles sold out</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="No refill needed"><span>No refill needed</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Refill urgently needed"><span>Refill urgently needed</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE display incomplete"><span>RTE display incomplete</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE near expiry"><span>RTE near expiry</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE sold out"><span>RTE sold out</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Short supply of banana"><span>Short supply of banana</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Short supply of RTE"><span>Short supply of RTE</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Singles sold out"><span>Singles sold out</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Slow fruit movement"><span>Slow fruit movement</span></label>
+      </div>
+        <p class="save-note">You can select more than one remark.</p>
+      </div>
+      <div class="field">
+        <label for="otherRemarks">Other remarks (optional)</label>
+        <textarea id="otherRemarks" placeholder="Type other remarks here"></textarea>
+      </div>
+    </div>
+
     <textarea id="remarks" class="hidden"></textarea>
-  </div>
+  </section>
 
-  <div class="row">
-    <button id="btnSave" class="gold" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save photos</button>
-  </div>
-  <div class="row">
-    <button id="btnDownload" class="ghost" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download photos</button>
-  </div>
-  <button class="linkbtn" id="btnGallery">Save to Gallery manually (long-press image)</button>
-  <div class="save-note" id="saveNote">Add a photo first — the stamp is baked into the saved image.</div>
+  <!-- STEP 3 -->
+  <section class="step-card">
+    <div class="step-head">
+      <div class="step-no">3</div>
+      <div class="step-copy"><h2 class="step-title">Display Photo</h2><p class="step-sub">Take or upload the store display photo.</p></div>
+    </div>
+    <div class="capture-shell">
+      <div class="stage" id="stage">
+        <canvas id="preview"></canvas>
+        <div class="empty" id="empty">
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <b>No photo yet</b><span>Take or upload the display photo.</span>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btnCam" class="gold icon-btn">Take photo</button>
+        <button id="btnUpload" class="icon-btn">Upload</button>
+        <button id="btnRetake" class="ghost hidden">Retake</button>
+      </div>
+      <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="file" accept="image/*" class="hidden">
+      <div class="photo-stage-status">
+        <div class="photo-stage-chip" id="beforePhotoStatus"><b>BEFORE PHOTO</b><span>Not taken</span></div>
+        <div class="photo-stage-chip" id="afterPhotoStatus"><b>AFTER PHOTO</b><span>Not taken</span></div>
+      </div>
+    </div>
+  </section>
 
-  <div class="panel">
-    <label>Google Drive photo upload</label>
-    <div id="mediaStatus" class="sync-status off">Checking photo queue…</div>
-    <button id="mediaRetry" class="ghost">Upload / retry photos</button>
-    <p class="save-note">Saving photos also queues both for the Tropikind Files Drive folder. Upload uses your existing sync URL and token. Offline uploads retry when you reconnect.</p>
-  </div>
-  <div class="panel recpanel">
-    <div class="recrow">
-      <span id="recCount">0 records saved</span>
-      <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
+  <!-- STEP 4 -->
+  <section class="step-card" id="receiptPanel">
+    <div class="step-head">
+      <div class="step-no">4</div>
+      <div class="step-copy"><h2 class="step-title">DR / BO Receipt</h2><p class="step-sub">Optional receipt photo paired using the same Visit Code.</p></div>
     </div>
-    <div class="sync-status off" id="syncStatus">Cloud sync off — add your Google Sheet link</div>
-    <div class="sync-cfg hidden" id="syncCfg">
-      <label>Google Sheet Web App URL</label>
-      <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">
-      <label>Secret token (must match the script)</label>
-      <input type="text" id="syncTokIn" autocomplete="off" placeholder="e.g. tropikind2026">
-      <p class="hint">Paste the Web App URL you get after deploying the Apps Script to your sheet. The token is optional but recommended.</p>
-      <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
+    <div class="subgroup">
+      <div class="recrow"><strong>Visit code: <span id="visitCodeLabel"></span></strong><button id="newVisit" class="ghost">New visit</button></div>
+      <label>DR/BO receipt photo (optional)</label>
+      <p class="save-note">Take a photo of the actual paper receipt. Keep all four corners visible and avoid glare. Both images use the same code.</p>
+      <div class="row"><button id="receiptTake" class="gold">Take receipt photo</button><button id="receiptUpload" class="ghost">Upload receipt</button></div>
+      <input id="receiptCam" type="file" accept="image/*" capture="environment" class="hidden">
+      <input id="receiptFile" type="file" accept="image/*" class="hidden">
+      <canvas id="receiptPreview" style="display:none;width:100%;height:auto;margin-top:14px;border-radius:10px"></canvas>
+      <div class="row"><button id="receiptSave" class="gold" disabled>Save receipt</button><button id="receiptDownload" class="ghost" disabled>Download receipt</button></div>
+      <div class="row"><button id="receiptRetake" class="ghost" disabled>Retake receipt</button><button id="receiptRemove" class="ghost" disabled>Remove receipt</button></div>
+      <p class="save-note">Receipt saves separately at its original dimensions. Save both images before starting a new visit.</p>
     </div>
-    <div class="row">
-      <button id="btnSyncNow" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Sync now</button>
-      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export CSV</button>
-      <button id="btnClear" class="ghost danger">Clear</button>
+  </section>
+
+  <!-- STEP 5 -->
+  <section class="step-card">
+    <div class="step-head">
+      <div class="step-no">5</div>
+      <div class="step-copy"><h2 class="step-title">Save &amp; Sync</h2><p class="step-sub">Save the visit and allow the existing Google Sheet and Drive sync to continue.</p></div>
     </div>
-  </div>
+
+    <div class="save-shell">
+      <div class="row"><button id="btnSave" class="gold" disabled>Save photos</button></div>
+      <div class="row"><button id="btnDownload" class="ghost" disabled>Download photos</button></div>
+      <button class="linkbtn" id="btnGallery">Save to Gallery manually (long-press image)</button>
+      <div class="save-note" id="saveNote">Add a photo first — the stamp is baked into the saved image.</div>
+    </div>
+
+    <div class="subgroup">
+      <div class="subgroup-title">Google Drive photo upload</div>
+      <div id="mediaStatus" class="sync-status off">Checking photo queue…</div>
+      <button id="mediaRetry" class="ghost">Upload / retry photos</button>
+      <p class="save-note">Saving photos also queues both for the Tropikind Files Drive folder. Upload uses your existing sync URL and token. Offline uploads retry when you reconnect.</p>
+    </div>
+
+    <div class="subgroup recpanel">
+      <div class="recrow">
+        <span id="recCount">0 records saved</span>
+        <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
+      </div>
+      <div class="sync-status off" id="syncStatus">Cloud sync off — add your Google Sheet link</div>
+      <div class="sync-cfg hidden" id="syncCfg">
+        <label>Google Sheet Web App URL</label>
+        <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">
+        <label>Secret token (must match the script)</label>
+        <input type="text" id="syncTokIn" autocomplete="off" placeholder="e.g. tropikind2026">
+        <p class="hint">Paste the Web App URL you get after deploying the Apps Script to your sheet. The token is optional but recommended.</p>
+        <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
+      </div>
+      <div class="row">
+        <button id="btnSyncNow" class="ghost">Sync now</button>
+        <button id="btnExport" class="ghost">Export CSV</button>
+        <button id="btnClear" class="ghost danger">Clear</button>
+      </div>
+    </div>
+  </section>
 
   <div class="foot">TROPIKIND® · One of a kind · Field documentation</div>
 </div>
@@ -349,8 +480,8 @@
 (function(){
   "use strict";
 
-  var BRANCHES = ["Acacia - 130019","Agdao","Anda - 3001","Asano GSIS - 30020","Bajada - 30007","Bangkal 1","Bangkal 3","Bucana","Buhangin KM5 - 30006","Buhangin KM6","Cabaguio - 30021","Cabantian 1 - 30077","Cabantian 2 - 30169","Carpenter","Central Park","Centrale","Claveria - 30017","Communal - 30192","Damosa-1","Damosa 2 - 30168","DCCS Washington - 30220","DMC - 30011","Doverlane - 30037","Dumanlas - 30140","Ecoland - 30009","El Rio - 30101","Fatima - 30057","Flyover - 30012","Garcia Heights - 30053","GSIS","Guerrero 1","Indangan Malagamot","J4 - 30004","J5 - 30044","Kumon Obrero - 30155","Lanang - 30199","Maa 1 - Gem - 30030","Maa 2 - 30034","Mabini - 30078","Madapo","Malvar - 30028","Marfori","Matina Crossing - 30181","MDRMC","MTS - 30010","N. Torres - 30110","NHA Buhangin","Obrero 1 - 30208","Panorama","Ponce - 30049","Quimpo","Rizal - 30098","Roxas - 30026","San Antonio Agdao","Sandawa - 30036","Sasa - 30199","St. Mary Buhangin - 30037","Sta.Ana - 30024","UM Matina - 30167"];
-  var STAFF = ["Laydan","Shara","Roxanne","Dennis","Rey","Luigi"];
+  var BRANCHES = ["Acacia","Agdao","Anda","Asano GSIS","Bajada","Bangkal 1","Bangkal 3","Bucana","Buhangin KM5","Buhangin KM6","Cabaguio","Cabantian 1","Cabantian 2","Carpenter","Central Park","Centrale","Claveria","Communal","Damosa 2","Damosa-1","DCCS Washington","DMC","Doverlane","Dumnalas","Ecoland","El Rio","Fatima","Flyover","Garcia Heights","GSIS","Guerrero 1","Indangan Malagamot","J4","J5","Kumon Obrero","Lanang","Maa 1 - Gem","Maa 2","Mabini","Madapo","Malvar","Marfori","Matina Crossing","MDRMC","MTS","N. Torres","NHA Buhangin","Obrero 1","Panorama","Ponce","Quimpo","Rizal","Roxas","San Antonio Agdao","Sandawa","Sasa","St. Mary Buhangin","Sta.Ana","UM Matina"];
+  var STAFF = ["Dennis","Laydan","Luigi","Rey","Roxanne"];
 
   // ---------- storage helpers ----------
   var LS = {
@@ -365,14 +496,95 @@
       btnDownload=$("btnDownload"), saveNote=$("saveNote");
 
   var pctx = preview.getContext("2d");
-  var base = document.createElement("canvas"); // full-res source
+  var base = document.createElement("canvas"); // active full-res source
+  var stagePhotos={
+    BEFORE:{canvas:document.createElement("canvas"),has:false},
+    AFTER:{canvas:document.createElement("canvas"),has:false}
+  };
   var hasImage=false;
+
+  function copyCanvas(src,dst){
+    dst.width=src.width; dst.height=src.height;
+    if(src.width&&src.height) dst.getContext("2d").drawImage(src,0,0);
+  }
+  function updatePhotoStageStatus(){
+    ["BEFORE","AFTER"].forEach(function(s){
+      var el=$(s==="BEFORE"?"beforePhotoStatus":"afterPhotoStatus");
+      if(!el)return;
+      var ready=!!stagePhotos[s].has;
+      el.classList.toggle("ready",ready);
+      var sp=el.querySelector("span"); if(sp)sp.textContent=ready?"Photo ready":"Not taken";
+    });
+  }
+  function restoreStagePhoto(){
+    var slot=stagePhotos[state.stage];
+    hasImage=!!(slot&&slot.has);
+    if(hasImage){
+      copyCanvas(slot.canvas,base);
+      empty.classList.add("hidden"); preview.style.display="block";
+      btnRetake.classList.remove("hidden"); btnSave.disabled=false; btnDownload.disabled=false;
+      saveNote.textContent=state.stage+" photo ready. The stamp updates live.";
+      draw();
+    }else{
+      base.width=0;base.height=0;
+      preview.style.display="none"; empty.classList.remove("hidden");
+      btnRetake.classList.add("hidden"); btnSave.disabled=true; btnDownload.disabled=true;
+      saveNote.textContent="Add the "+state.stage+" photo first.";
+    }
+    updatePhotoStageStatus();
+  }
+  function clearAllStagePhotos(){
+    ["BEFORE","AFTER"].forEach(function(s){
+      stagePhotos[s].has=false;stagePhotos[s].canvas.width=0;stagePhotos[s].canvas.height=0;
+    });
+    restoreStagePhoto();
+  }
 
   var state = {
     stage: LS.get("tk_stage","AFTER"),
     branch: LS.get("tk_branch","Communal"),
     staff: LS.get("tk_staff","Laydan")
   };
+
+  var refillTargets={};
+  function targetKey(s){return String(s||"").trim().toLowerCase();}
+  function inventoryNumber(id){
+    var el=$(id), n=Number(el&&el.value);
+    return isFinite(n)&&n>=0?n:0;
+  }
+  function renderRefillTargets(){
+    var t=refillTargets[targetKey(state.branch)]||null;
+    var tm=$("targetMingles"),tr=$("targetRTE"),sm=$("suggestMingles"),sr=$("suggestRTE"),note=$("targetRefillNote");
+    if(!tm||!tr||!sm||!sr)return;
+    if(!t){
+      tm.textContent=tr.textContent=sm.textContent=sr.textContent="—";
+      if(note)note.textContent='No target set. Encode it in Google Sheet → Store Refill Targets.';
+      return;
+    }
+    var mv=(t.mingles===""||t.mingles==null)?null:Number(t.mingles);
+    var rv=(t.rte===""||t.rte==null)?null:Number(t.rte);
+    tm.textContent=(mv!=null&&isFinite(mv))?String(mv):"—";
+    tr.textContent=(rv!=null&&isFinite(rv))?String(rv):"—";
+    sm.textContent=(mv!=null&&isFinite(mv))?String(Math.max(0,mv-inventoryNumber("biMingles"))):"—";
+    sr.textContent=(rv!=null&&isFinite(rv))?String(Math.max(0,rv-inventoryNumber("biRTE"))):"—";
+    if(note)note.textContent='Suggested Refill = Target Stock − Beginning Inventory.';
+  }
+  function loadRefillTargets(){
+    var url=(typeof syncURL==="function")?syncURL():"";
+    if(!url||!navigator.onLine){renderRefillTargets();return;}
+    var join=url.indexOf("?")>=0?"&":"?";
+    fetch(url+join+"action=targets&token="+encodeURIComponent(syncTok()),{method:"GET",cache:"no-store"})
+      .then(function(res){return res.json();})
+      .then(function(data){
+        if(!data||!data.ok||!Array.isArray(data.targets))return;
+        refillTargets={};
+        data.targets.forEach(function(x){
+          if(x&&x.store)refillTargets[targetKey(x.store)]={mingles:x.mingles,rte:x.rte};
+        });
+        renderRefillTargets();
+      })
+      .catch(function(){renderRefillTargets();});
+  }
 
 
   // Image pairing is separate from the record and Google Sheet payload.
@@ -443,7 +655,7 @@
   $('newVisit').addEventListener('click',function(){
     if(!confirm('Start a new visit code? Save both current photos first. Current photo previews will be cleared.'))return;
     visitCode=makeVisitCode();LS.set('tk_photo_visit_code',visitCode);$('visitCodeLabel').textContent=visitCode;
-    btnRetake.click();clearReceipt();toast('New visit · '+visitCode);
+    clearAllStagePhotos();clearReceipt();toast('New visit · '+visitCode);
   });
   ['branch','when','staff'].forEach(function(id){$(id).addEventListener('change',drawReceipt);});
 
@@ -460,7 +672,7 @@
   fillSelect($("branch"), BRANCHES, "tk_custom_branch", state.branch);
   fillSelect($("staff"), STAFF, "tk_custom_staff", state.staff);
 
-  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); draw(); });
+  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); renderRefillTargets(); draw(); });
   $("staff").addEventListener("change",function(){ state.staff=this.value; LS.set("tk_staff",state.staff); draw(); });
 
   $("addBranch").addEventListener("click",function(){
@@ -495,6 +707,8 @@
     if(typeof skuBox!=="undefined" && skuBox) renderSkuCounts();
 
     composeRemarks();
+    if(btnCam) btnCam.lastChild.nodeValue = " Take "+v+" photo";
+    restoreStagePhoto();
   }
   seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(b) setStage(b.dataset.v); });
   setStage(state.stage);
@@ -543,13 +757,24 @@
     });
   }
   renderProd(); renderSkuCounts();
+  updatePhotoStageStatus();
 
   // ---------- date/time ----------
   function pad(n){return (n<10?"0":"")+n;}
   function toLocalInput(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); }
-  function setNow(){ $("when").value=toLocalInput(new Date()); draw(); }
+  function isoWeek(d){
+    var x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    var day=x.getUTCDay()||7; x.setUTCDate(x.getUTCDate()+4-day);
+    var yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));
+    return Math.ceil((((x-yearStart)/86400000)+1)/7);
+  }
+  function updateWeek(){
+    var v=$("when").value, d=v?new Date(v):new Date(); if(isNaN(d.getTime()))d=new Date();
+    var el=$("weekNo"); if(el)el.textContent="Week "+isoWeek(d);
+  }
+  function setNow(){ $("when").value=toLocalInput(new Date()); updateWeek(); draw(); }
   $("btnNow").addEventListener("click", setNow);
-  $("when").addEventListener("change", draw);
+  $("when").addEventListener("change", function(){updateWeek();draw();});
   setNow();
   $("beginningInventoryField").style.display=(state.stage==="BEFORE")?"":"none";
   composeRemarks();
@@ -561,9 +786,13 @@
 
   function composeRemarks(){
     var parts=[];
-    var fixed=$("remarkSelect").value.trim();
+    var selected=Array.prototype.map.call(
+      document.querySelectorAll('input[name="remarkOption"]:checked'),
+      function(o){ return o.value.trim(); }
+    ).filter(Boolean);
     var other=$("otherRemarks").value.trim();
-    if(fixed) parts.push(fixed);
+
+    selected.forEach(function(v){ parts.push(v); });
     if(other) parts.push(other);
 
     if(state.stage==="BEFORE"){
@@ -578,10 +807,12 @@
     draw();
   }
 
-  $("remarkSelect").addEventListener("change", composeRemarks);
+  $("remarkSelect").addEventListener("change", function(e){
+    if(e.target && e.target.name==="remarkOption") composeRemarks();
+  });
   $("otherRemarks").addEventListener("input", composeRemarks);
   ["biMingles","biSingles","biRTE"].forEach(function(id){
-    $(id).addEventListener("input", composeRemarks);
+    $(id).addEventListener("input", function(){ composeRemarks(); renderRefillTargets(); });
   });
 
   // ---------- photo input (native camera or gallery) ----------
@@ -596,10 +827,13 @@
     var url = URL.createObjectURL(f);
     var img = new Image();
     img.onload = function(){
-      base.width  = img.naturalWidth  || img.width;
-      base.height = img.naturalHeight || img.height;
-      if(!base.width || !base.height){ toast("Couldn't read that image."); URL.revokeObjectURL(url); return; }
-      base.getContext("2d").drawImage(img,0,0,base.width,base.height);
+      var slot=stagePhotos[state.stage];
+      slot.canvas.width=img.naturalWidth||img.width;
+      slot.canvas.height=img.naturalHeight||img.height;
+      if(!slot.canvas.width || !slot.canvas.height){ toast("Couldn't read that image."); URL.revokeObjectURL(url); return; }
+      slot.canvas.getContext("2d").drawImage(img,0,0,slot.canvas.width,slot.canvas.height);
+      slot.has=true;
+      copyCanvas(slot.canvas,base);
       URL.revokeObjectURL(url);
       onImageReady();
     };
@@ -610,16 +844,21 @@
   fileCam.addEventListener("change", function(){ loadFromInput(fileCam); });
 
   btnRetake.addEventListener("click", function(){
-    hasImage=false; preview.style.display="none"; empty.classList.remove("hidden");
+    var slot=stagePhotos[state.stage];
+    if(slot){slot.has=false;slot.canvas.width=0;slot.canvas.height=0;}
+    hasImage=false; base.width=0;base.height=0;
+    preview.style.display="none"; empty.classList.remove("hidden");
     btnRetake.classList.add("hidden"); btnSave.disabled=true; btnDownload.disabled=true;
-    saveNote.textContent="Add a photo first — the stamp is baked into the saved image.";
+    saveNote.textContent="Add the "+state.stage+" photo first.";
+    updatePhotoStageStatus();
   });
 
   function onImageReady(){
     hasImage=true; empty.classList.add("hidden");
     preview.style.display="block"; btnRetake.classList.remove("hidden");
     btnSave.disabled=false; btnDownload.disabled=false;
-    saveNote.textContent="Looks right? The stamp updates live. Tap save to keep it.";
+    saveNote.textContent=state.stage+" photo ready. The stamp updates live. Tap save to keep it.";
+    updatePhotoStageStatus();
     draw();
   }
 
@@ -672,9 +911,9 @@
 
   function drawStamp(ctx, W, H){
     // Overlay inside the original frame: no crop, resize or appended panel.
-    var panelW=W*0.38, panelX=W-panelW;
-    var x=panelX+panelW*0.075, right=W-panelW*0.075, innerW=right-x;
-    var unit=Math.min(H/1000,panelW/320);
+    var panelW=W*0.44, panelX=W-panelW;
+    var x=panelX+panelW*0.065, right=W-panelW*0.06, innerW=right-x;
+    var unit=Math.min(H/860,panelW/260);
     var after=state.stage==='AFTER', dt=humanDateTime();
     var comments=($("remarks").value||"").trim();
 
@@ -723,18 +962,18 @@
       ctx.fillStyle='rgba(224,177,58,.72)';
       ctx.fillRect(x,boxY,innerW,Math.max(1,2*unit));
 
-      text('COMMENTS',boxY+boxH*.13,18,'#f2d27a',800);
+      text(state.stage==='BEFORE'?'BEGINNING INVENTORY / REMARKS':'REMARKS',boxY+boxH*.12,20,'#f2d27a',800);
 
-      var fontPx=Math.max(12,22*unit);
-      var lineH=Math.max(18,31*unit);
-      var maxLines=Math.max(3,Math.floor((boxH-boxH*.27)/lineH));
+      var fontPx=Math.max(15,26*unit);
+      var lineH=Math.max(21,36*unit);
+      var maxLines=Math.max(4,Math.floor((boxH-boxH*.26)/lineH));
       var lines=wrapLines(comments,innerW-16*unit,maxLines,fontPx);
 
       ctx.font='600 '+fontPx+'px Segoe UI, sans-serif';
       ctx.fillStyle='#ffffff';
       ctx.textAlign='left';
       ctx.textBaseline='top';
-      var yy=boxY+boxH*.23;
+      var yy=boxY+boxH*.22;
       lines.forEach(function(line){
         ctx.fillText(line,x+8*unit,yy,innerW-16*unit);
         yy+=lineH;
@@ -747,6 +986,8 @@
     text(state.branch||'—',H*.155,28,'#ffffff',800);
     text(state.stage,H*.225,38,after?'#5be08a':'#ffab2e',800);
     text(dt.date,H*.28,22);text(dt.time,H*.317,22);
+    var wd=$("when").value?new Date($("when").value):new Date(); if(isNaN(wd.getTime()))wd=new Date();
+    text('WEEK '+isoWeek(wd),H*.348,18,'#f2d27a',800);
 
     if(after){
       var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});
@@ -776,14 +1017,14 @@
         metric('BO',c.bo,y+block*.69,'#ffab6b');
       });
 
-      if(comments) drawCommentsBox(H*.70,H*.835);
+      if(comments) drawCommentsBox(H*.67,H*.855);
     }else{
       // BEFORE: use the large middle area for readable visit comments.
-      if(comments) drawCommentsBox(H*.43,H*.82);
+      if(comments) drawCommentsBox(H*.37,H*.855);
     }
 
-    text('Staff: '+(state.staff||'—'),H*.887,23);
-    text('CODE: '+visitCode,H*.957,34,'#f2d27a',800);
+    text('Staff: '+(state.staff||'—'),H*.895,24);
+    text('CODE: '+visitCode,H*.962,36,'#f2d27a',800);
     ctx.restore();
   }
 
@@ -1062,6 +1303,8 @@
   $('mediaRetry').addEventListener('click',function(){syncMediaQueue();});
   window.addEventListener('online',function(){syncMediaQueue();});
   setTimeout(function(){updateMediaStatus();syncMediaQueue();},1800);
+  setTimeout(loadRefillTargets,2200);
+  window.addEventListener("online",loadRefillTargets);
 
 
   // show stamped image so the user can long-press → Save image (works in any Android browser)
