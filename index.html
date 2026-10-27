@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TropiKind Field Camera v36.4</title>
+<title>TropiKind Field Camera v25 Professional UI</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TropiKind">
@@ -165,78 +165,247 @@
   button.danger{color:#ff8a7a;border-color:rgba(255,90,72,.4)}
   .foot{text-align:center;color:var(--muted);font-size:10.5px;letter-spacing:.06em;margin-top:16px}
 
-  /* ---------- Guided visual hierarchy ---------- */
-  .step-card{margin-top:14px;background:linear-gradient(180deg,rgba(14,37,69,.72),rgba(8,21,37,.82));border:2px solid rgba(224,177,58,.48);border-radius:18px;padding:15px;box-shadow:0 10px 28px rgba(0,0,0,.24)}
-  .step-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(224,177,58,.28)}
-  .step-no{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(160deg,var(--gold-soft),var(--gold));color:#2a1e02;font-weight:900;font-size:17px;box-shadow:0 5px 14px rgba(224,177,58,.18)}
-  .step-copy{min-width:0}
-  .step-title{margin:0;color:#fff;font-size:17px;line-height:1.15;font-weight:900;letter-spacing:.035em;text-transform:uppercase}
-  .step-sub{margin:3px 0 0;color:var(--muted);font-size:11px;line-height:1.35}
-  .subgroup{margin:12px 0 0;padding:12px;border:1px solid rgba(255,255,255,.12);border-left:3px solid rgba(224,177,58,.78);border-radius:13px;background:rgba(6,16,31,.36)}
-  .subgroup:first-of-type{margin-top:0}
-  .subgroup-title{font-size:12px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--gold-soft);margin:0 0 10px}
-  .week-chip{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:10px 12px;border:1px solid rgba(224,177,58,.30);border-radius:11px;background:#081525}
-  .week-chip span:first-child{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-  .week-chip strong{font-size:18px;color:var(--gold-soft);letter-spacing:.03em}
-  .remarks-box select{min-height:250px;border-color:rgba(224,177,58,.30)}
-  .remarks-box .save-note{text-align:left;margin:7px 2px 0}
-  #beginningInventoryField{border:2px solid rgba(255,171,46,.42);background:rgba(255,171,46,.055)}
-  #beginningInventoryField>label{font-size:14px;font-weight:900;color:#ffd08a;margin-bottom:12px}
-  #beginningInventoryField .sku-row .nm{font-size:18px;min-width:92px}
-  #beginningInventoryField input{font-size:32px;font-weight:900}
-  .capture-shell{padding:12px;border:2px solid rgba(224,177,58,.36);border-radius:16px;background:rgba(2,6,13,.44)}
-  .capture-shell .stage{margin:0}
-  .save-shell{margin-top:14px;padding:14px;border:2px solid rgba(51,194,107,.30);border-radius:16px;background:rgba(51,194,107,.05)}
+  .remarks-checklist{display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px}
+  .remark-check{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:0;
+    border:1px solid rgba(255,255,255,.12);border-radius:11px;background:#081525;
+    color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+  .remark-check input{width:22px;height:22px;min-width:22px;accent-color:#e0b13a}
+  .remark-check span{line-height:1.3}
+
+
+  /* Professional Beginning Inventory block */
+  #beginningInventoryField{
+    border:2px solid rgba(224,177,58,.58);
+    background:linear-gradient(180deg,rgba(224,177,58,.08),rgba(8,21,37,.72));
+    box-shadow:0 10px 26px rgba(0,0,0,.18);
+    padding:16px;
+  }
+  #beginningInventoryField .inventory-title{
+    font-size:15px;
+    letter-spacing:.09em;
+    color:#f2d27a;
+    margin-bottom:4px;
+  }
+  #beginningInventoryField .inventory-helper{
+    font-size:12px;
+    line-height:1.45;
+    color:#c6d1df;
+    margin-bottom:14px;
+  }
+  #beginningInventoryField .sku-row{
+    display:grid;
+    grid-template-columns:105px 1fr;
+    gap:12px;
+    align-items:center;
+    padding:10px 0;
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  #beginningInventoryField .sku-row:first-of-type{border-top:none}
+  #beginningInventoryField .sku-row .nm{
+    font-size:18px;
+    font-weight:900;
+    color:#fff;
+    letter-spacing:.01em;
+  }
+  #beginningInventoryField .sku-row .cell small{
+    font-size:10px;
+    color:#9fb2c9;
+    letter-spacing:.08em;
+  }
+  #beginningInventoryField .sku-row input{
+    min-height:62px;
+    font-size:34px;
+    font-weight:900;
+    text-align:center;
+    border:2px solid rgba(224,177,58,.42);
+    border-radius:13px;
+    background:#06101f;
+    color:#fff;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+  }
+  #beginningInventoryField .sku-row input:focus{
+    outline:none;
+    border-color:#e0b13a;
+    box-shadow:0 0 0 3px rgba(224,177,58,.16);
+  }
   @media (max-width:430px){
-    .step-card{padding:12px}
-    .step-title{font-size:16px}
-    .step-sub{font-size:10.5px}
-    .subgroup{padding:11px}
-    .row{gap:8px}
-    button{padding:13px 10px}
-    .remarks-box select{min-height:220px}
+    #beginningInventoryField{padding:14px}
+    #beginningInventoryField .sku-row{grid-template-columns:92px 1fr}
+    #beginningInventoryField .sku-row .nm{font-size:17px}
+    #beginningInventoryField .sku-row input{font-size:32px;min-height:58px}
   }
 
 
-  .remarks-checklist{display:grid;grid-template-columns:1fr;gap:8px;max-height:390px;overflow:auto;padding:4px}
-  .remark-check{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;margin:0;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:#081525;color:#fff;font-size:14px;font-weight:700;line-height:1.35;cursor:pointer}
-  .remark-check input{appearance:none;-webkit-appearance:none;width:22px;height:22px;min-width:22px;border:2px solid rgba(224,177,58,.72);border-radius:6px;background:#06101f;margin:0;display:grid;place-items:center}
-  .remark-check input:checked{background:linear-gradient(160deg,var(--gold-soft),var(--gold));border-color:var(--gold)}
-  .remark-check input:checked::after{content:"✓";color:#2a1e02;font-size:15px;font-weight:900;line-height:1}
-  .remark-check span{padding-top:1px}
-  .photo-stage-status{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 2px}
-  .photo-stage-chip{border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:9px 10px;background:#081525;text-align:center}
-  .photo-stage-chip b{display:block;font-size:12px;letter-spacing:.05em}
-  .photo-stage-chip span{display:block;margin-top:3px;font-size:11px;color:var(--muted)}
-  .photo-stage-chip.ready{border-color:rgba(51,194,107,.45);background:rgba(51,194,107,.08)}
-  .photo-stage-chip.ready span{color:#8ef0b0}
+  /* ===== Professional visual hierarchy refresh — UI ONLY ===== */
 
-
-  .target-box{margin-top:12px;padding:12px;border:2px solid rgba(51,194,107,.32);border-radius:13px;background:rgba(51,194,107,.055)}
-  .target-title{font-size:12px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:#8ef0b0;margin:0 0 10px}
-  .target-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  .target-card{border:1px solid rgba(255,255,255,.12);border-radius:11px;background:#081525;padding:10px}
-  .target-card b{display:block;color:var(--gold-soft);font-size:13px;margin-bottom:7px}
-  .target-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-top:5px}
-  .target-line strong{color:#fff;font-size:16px}
-  .target-suggest strong{color:#8ef0b0;font-size:22px}
-  .target-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.4}
-
-
-  .monitor-banner{
-    margin:0 0 14px;padding:15px 16px;border-radius:16px;
-    background:linear-gradient(145deg,#0e2545,#081525);
-    border:1px solid rgba(224,177,58,.34);box-shadow:0 10px 24px rgba(0,0,0,.24)
+  /* Main BEFORE inventory card */
+  #beginningInventoryField{
+    margin-top:16px;
+    padding:20px 18px 18px;
+    border:3px solid rgba(224,177,58,.78);
+    border-radius:16px;
+    background:
+      linear-gradient(180deg,rgba(224,177,58,.10),rgba(8,21,37,.88));
+    box-shadow:
+      0 14px 34px rgba(0,0,0,.28),
+      inset 0 0 0 1px rgba(255,255,255,.035);
   }
-  .monitor-kicker{font-size:10px;color:var(--gold-soft);font-weight:900;letter-spacing:.22em}
-  .monitor-title{font-size:23px;font-weight:900;letter-spacing:.03em;margin-top:2px;color:#fff}
-  .monitor-sub{font-size:11px;color:var(--muted);margin-top:3px}
-  .visit-code-line{padding:10px 12px;border-radius:10px;background:#081525;border:1px solid rgba(255,255,255,.1);font-size:12px;color:var(--muted)}
-  .visit-code-line strong{color:var(--gold-soft);font-size:15px;letter-spacing:.08em}
-  .admin-toggle{width:100%;margin-top:14px}
-  #adminTools{margin-top:10px}
-  #photoStep .field{margin-bottom:12px}
-  #detailsStep .remarks-box{margin-top:12px}
+
+  /* Strong title hierarchy */
+  #beginningInventoryField .subgroup-title,
+  #beginningInventoryField .inventory-title{
+    display:block;
+    margin:0 0 6px;
+    padding:0 0 10px;
+    border-bottom:2px solid rgba(224,177,58,.36);
+    color:#f7d978;
+    font-size:19px;
+    line-height:1.2;
+    font-weight:900;
+    letter-spacing:.045em;
+    text-transform:uppercase;
+  }
+
+  #beginningInventoryField .inventory-helper{
+    display:block;
+    margin:0 0 16px;
+    color:#c9d5e4;
+    font-size:12px;
+    font-weight:600;
+    line-height:1.45;
+  }
+
+  /* Clear SKU rows */
+  #beginningInventoryField .sku-row{
+    display:grid;
+    grid-template-columns:110px 1fr;
+    gap:14px;
+    align-items:center;
+    margin:0;
+    padding:16px 0;
+    border-top:1px solid rgba(255,255,255,.10);
+  }
+
+  #beginningInventoryField .sku-row:first-of-type{
+    border-top:none;
+    padding-top:8px;
+  }
+
+  #beginningInventoryField .sku-row .nm{
+    color:#ffffff;
+    font-size:19px;
+    font-weight:900;
+    line-height:1.1;
+    letter-spacing:.01em;
+  }
+
+  #beginningInventoryField .sku-row .cell{
+    min-width:0;
+  }
+
+  #beginningInventoryField .sku-row .cell small{
+    display:block;
+    margin:0 0 6px 2px;
+    color:#9fc1f0;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  #beginningInventoryField .sku-row input{
+    width:100%;
+    min-height:66px;
+    padding:10px 14px;
+    border:2px solid rgba(224,177,58,.72);
+    border-radius:14px;
+    background:#06101f;
+    color:#ffffff;
+    font-size:36px;
+    font-weight:900;
+    text-align:center;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.025),
+      0 5px 16px rgba(0,0,0,.16);
+  }
+
+  #beginningInventoryField .sku-row input:focus{
+    outline:none;
+    border-color:#f2d27a;
+    box-shadow:
+      0 0 0 4px rgba(224,177,58,.16),
+      inset 0 0 0 1px rgba(255,255,255,.04);
+  }
+
+  #beginningInventoryField .sku-row input::placeholder{
+    color:rgba(255,255,255,.28);
+  }
+
+  /* Improve nearby form hierarchy without changing controls */
+  #remarksField,
+  .remarks-box{
+    border-radius:15px;
+  }
+
+  .remarks-box .subgroup-title{
+    font-size:15px;
+    font-weight:900;
+    letter-spacing:.05em;
+  }
+
+  .remarks-checklist{
+    gap:9px;
+  }
+
+  .remark-check{
+    padding:12px 13px;
+    border-radius:12px;
+    transition:border-color .15s ease, background .15s ease, transform .05s ease;
+  }
+
+  .remark-check:hover{
+    border-color:rgba(224,177,58,.42);
+    background:#0a1a2d;
+  }
+
+  .remark-check:active{
+    transform:scale(.995);
+  }
+
+  /* Make primary action section read as the next step */
+  #btnSave{
+    min-height:54px;
+    font-size:16px;
+    font-weight:900;
+    letter-spacing:.01em;
+  }
+
+  @media (max-width:430px){
+    #beginningInventoryField{
+      padding:17px 14px 15px;
+      border-width:3px;
+    }
+
+    #beginningInventoryField .subgroup-title,
+    #beginningInventoryField .inventory-title{
+      font-size:17px;
+    }
+
+    #beginningInventoryField .sku-row{
+      grid-template-columns:92px 1fr;
+      gap:10px;
+      padding:14px 0;
+    }
+
+    #beginningInventoryField .sku-row .nm{
+      font-size:17px;
+    }
+
+    #beginningInventoryField .sku-row input{
+      min-height:60px;
+      font-size:32px;
+    }
+  }
 
 </style>
 </head>
@@ -252,80 +421,46 @@
     <button id="installBtn" class="install-btn hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>Install</button>
   </header>
 
-  <div class="monitor-banner">
-    <div class="monitor-kicker">TROPIKIND</div>
-    <div class="monitor-title">Delivery Monitoring</div>
-    <div class="monitor-sub">Simple field flow: photo → details → save</div>
+  <!-- Preview -->
+  <div class="stage" id="stage">
+    <canvas id="preview"></canvas>
+    <div class="empty" id="empty">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <b>No photo yet</b>
+      <span>Open the camera or upload a shot of the display, then stamp it.</span>
+    </div>
   </div>
 
-  <!-- 1. PHOTO FIRST -->
-  <section class="step-card" id="photoStep">
-    <div class="step-head">
-      <div class="step-no">1</div>
-      <div class="step-copy"><h2 class="step-title">Take Photo</h2><p class="step-sub">Choose BEFORE or AFTER, then take the store display photo.</p></div>
-    </div>
+  <!-- capture controls -->
+  <div class="row">
+    <button id="btnCam" class="gold icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take photo</button>
+    <button id="btnUpload" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
+    <button id="btnRetake" class="ghost hidden">Retake</button>
+  </div>
+  <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
+  <input type="file" id="file" accept="image/*" class="hidden">
 
+
+  <div class="panel" id="receiptPanel">
+    <div class="recrow"><strong>Visit code: <span id="visitCodeLabel"></span></strong><button id="newVisit" class="ghost">New visit</button></div>
+    <label>DR/BO receipt photo (optional)</label>
+    <p class="save-note">Take a photo of the actual paper receipt. Keep all four corners visible and avoid glare. Both images use the same code.</p>
+    <div class="row"><button id="receiptTake" class="gold">Take receipt photo</button><button id="receiptUpload" class="ghost">Upload receipt</button></div>
+    <input id="receiptCam" type="file" accept="image/*" capture="environment" class="hidden">
+    <input id="receiptFile" type="file" accept="image/*" class="hidden">
+    <canvas id="receiptPreview" style="display:none;width:100%;height:auto;margin-top:14px;border-radius:10px"></canvas>
+    <div class="row"><button id="receiptSave" class="gold" disabled>Save receipt</button><button id="receiptDownload" class="ghost" disabled>Download receipt</button></div>
+    <div class="row"><button id="receiptRetake" class="ghost" disabled>Retake receipt</button><button id="receiptRemove" class="ghost" disabled>Remove receipt</button></div>
+    <p class="save-note">Receipt saves separately at its original dimensions. Save both images before starting a new visit.</p>
+  </div>
+
+  <!-- details -->
+  <div class="panel">
     <div class="field">
       <label>Visit stage</label>
       <div class="seg" id="seg">
         <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
         <button data-v="AFTER" aria-pressed="true">AFTER</button>
-      </div>
-    </div>
-
-    <div class="capture-shell">
-      <div class="stage" id="stage">
-        <canvas id="preview"></canvas>
-        <div class="empty" id="empty">
-          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <b>No photo yet</b><span>Take or upload the store display photo.</span>
-        </div>
-      </div>
-      <div class="row">
-        <button id="btnCam" class="gold icon-btn">Take photo</button>
-        <button id="btnUpload" class="icon-btn">Upload</button>
-        <button id="btnRetake" class="ghost hidden">Retake</button>
-      </div>
-      <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
-      <input type="file" id="file" accept="image/*" class="hidden">
-
-      <div class="photo-stage-status">
-        <div class="photo-stage-chip" id="beforePhotoStatus"><b>BEFORE PHOTO</b><span>Not taken</span></div>
-        <div class="photo-stage-chip" id="afterPhotoStatus"><b>AFTER PHOTO</b><span>Not taken</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 2. VISIT DETAILS -->
-  <section class="step-card">
-    <div class="step-head">
-      <div class="step-no">2</div>
-      <div class="step-copy"><h2 class="step-title">Visit Details</h2><p class="step-sub">Store, delivery staff and visit date.</p></div>
-    </div>
-
-    <div class="field">
-      <label for="branch">Store branch</label>
-      <div class="inline"><select id="branch"></select><button class="ghost" id="addBranch">+ Add</button></div>
-    </div>
-    <div class="field">
-      <label for="staff">Delivery staff</label>
-      <div class="inline"><select id="staff"></select><button class="ghost" id="addStaff">+ Add</button></div>
-    </div>
-    <div class="field">
-      <label for="when">Date &amp; time</label>
-      <div class="inline"><input type="datetime-local" id="when"><button class="ghost" id="btnNow">Now</button></div>
-      <div class="week-chip"><span>Week number</span><strong id="weekNo">—</strong></div>
-    </div>
-    <div class="visit-code-line">Visit Code: <strong id="visitCodeLabel"></strong></div>
-  </section>
-
-  <!-- 3. STAGE DETAILS -->
-  <section class="step-card" id="detailsStep">
-    <div class="step-head">
-      <div class="step-no">3</div>
-      <div class="step-copy">
-        <h2 class="step-title" id="detailsTitle">BEFORE Details</h2>
-        <p class="step-sub" id="detailsSub">Beginning Inventory, weekly target and remarks.</p>
       </div>
     </div>
 
@@ -338,9 +473,60 @@
       </div>
     </div>
 
-    <div class="subgroup" id="beginningInventoryField">
-      <div class="subgroup-title">Beginning Inventory — BEFORE</div>
-      <label>Existing stock before refill</label>
+    <div class="field" id="skuCountsField">
+      <label>Refill &amp; BO — per product</label>
+      <div id="skuCounts"></div>
+    </div>
+
+    <div class="field">
+      <label for="branch">Store branch</label>
+      <div class="inline">
+        <select id="branch"></select>
+        <button class="ghost" id="addBranch">+ Add</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="when">Date &amp; time</label>
+      <div class="inline">
+        <input type="datetime-local" id="when">
+        <button class="ghost" id="btnNow">Now</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="staff">Delivery staff</label>
+      <div class="inline">
+        <select id="staff"></select>
+        <button class="ghost" id="addStaff">+ Add</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Remarks — select all that apply</label>
+      <div id="remarkSelect" class="remarks-checklist" role="group" aria-label="Select one or more remarks">
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Bad quality fruit"><span>Bad quality fruit</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Excess supply"><span>Excess supply</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Good store performance"><span>Good store performance</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Hot store environment"><span>Hot store environment</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Short supply of banana"><span>Short supply of banana</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Short supply of RTE"><span>Short supply of RTE</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana color not acceptable"><span>Banana color not acceptable</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Refill urgently needed"><span>Refill urgently needed</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE near expiry"><span>RTE near expiry</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Soft / Over ripe bananas"><span>Soft / Over ripe bananas</span></label>
+        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Slow fruit movement"><span>Slow fruit movement</span></label>
+      </div>
+      <p class="save-note">Tap as many remarks as needed.</p>
+    </div>
+
+    <div class="field">
+      <label for="otherRemarks">Other remarks (optional)</label>
+      <textarea id="otherRemarks" placeholder="Type other remarks here"></textarea>
+    </div>
+
+    <div class="field" id="beginningInventoryField">
+      <label>Beginning Inventory (BEFORE) — enter existing stock before refill</label>
       <div class="sku-row">
         <div class="nm">Mingles</div>
         <div class="cell"><small>Packs</small><input id="biMingles" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
@@ -355,150 +541,47 @@
       </div>
     </div>
 
-    <div class="target-box" id="targetRefillBox">
-      <div class="target-title">Weekly Refill Target</div>
-      <div class="target-grid">
-        <div class="target-card">
-          <b>Mingles</b>
-          <div class="target-line"><span>Target stock</span><strong id="targetMingles">—</strong></div>
-          <div class="target-line target-suggest"><span>Suggested refill</span><strong id="suggestMingles">—</strong></div>
-        </div>
-        <div class="target-card">
-          <b>RTE</b>
-          <div class="target-line"><span>Target stock</span><strong id="targetRTE">—</strong></div>
-          <div class="target-line target-suggest"><span>Suggested refill</span><strong id="suggestRTE">—</strong></div>
-        </div>
-      </div>
-      <div class="target-note" id="targetRefillNote">Select the visit date to load the matching weekly set.</div>
-    </div>
-
-    <div class="subgroup" id="afterCountsGroup">
-      <div class="subgroup-title">Actual Refill &amp; BO — AFTER</div>
-      <div class="field" id="skuCountsField">
-        <label>Enter actual refill and Bad Order (BO)</label>
-        <div id="skuCounts"></div>
-      </div>
-    </div>
-
-<div class="subgroup remarks-box" id="remarksField">
-      <div class="subgroup-title">Remarks — select all that apply</div>
-      <div class="field">
-        <label for="remarkSelect">Multiple remarks</label>
-        <div id="remarkSelect" class="remarks-checklist" role="group" aria-label="Select one or more remarks">
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Bad quality fruit"><span>Bad quality fruit</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana color acceptable"><span>Banana color acceptable</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana color not acceptable"><span>Banana color not acceptable</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana overripe"><span>Banana overripe</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Banana underripe"><span>Banana underripe</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Display needs cleaning"><span>Display needs cleaning</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Display needs rearranging"><span>Display needs rearranging</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Excess supply"><span>Excess supply</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Good store performance"><span>Good store performance</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="High BO observed"><span>High BO observed</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="High customer movement"><span>High customer movement</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Hot store environment"><span>Hot store environment</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Low BO observed"><span>Low BO observed</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Low customer movement"><span>Low customer movement</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Mingles sold out"><span>Mingles sold out</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="No refill needed"><span>No refill needed</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Refill urgently needed"><span>Refill urgently needed</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE display incomplete"><span>RTE display incomplete</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE near expiry"><span>RTE near expiry</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="RTE sold out"><span>RTE sold out</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Short supply of banana"><span>Short supply of banana</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Short supply of RTE"><span>Short supply of RTE</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Singles sold out"><span>Singles sold out</span></label>
-        <label class="remark-check"><input type="checkbox" name="remarkOption" value="Slow fruit movement"><span>Slow fruit movement</span></label>
-      </div>
-        <p class="save-note">You can select more than one remark.</p>
-      </div>
-      <div class="field">
-        <label for="otherRemarks">Other remarks (optional)</label>
-        <textarea id="otherRemarks" placeholder="Type other remarks here"></textarea>
-      </div>
-    </div>
-
+    <!-- Legacy remarks field retained so CSV and Google Sheet payload format stay unchanged. -->
     <textarea id="remarks" class="hidden"></textarea>
-  </section>
+  </div>
 
-  <!-- 4. RECEIPT - AFTER ONLY -->
-  <section class="step-card" id="receiptPanel">
-    <div class="step-head">
-      <div class="step-no">4</div>
-      <div class="step-copy"><h2 class="step-title">Receipt / DR / BO</h2><p class="step-sub">AFTER only. Take the receipt photo when available.</p></div>
+  <div class="row">
+    <button id="btnSave" class="gold" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save photos</button>
+  </div>
+  <div class="row">
+    <button id="btnDownload" class="ghost" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download photos</button>
+  </div>
+  <button class="linkbtn" id="btnGallery">Save to Gallery manually (long-press image)</button>
+  <div class="save-note" id="saveNote">Add a photo first — the stamp is baked into the saved image.</div>
+
+  <div class="panel">
+    <label>Google Drive photo upload</label>
+    <div id="mediaStatus" class="sync-status off">Checking photo queue…</div>
+    <button id="mediaRetry" class="ghost">Upload / retry photos</button>
+    <p class="save-note">Saving photos also queues both for the Tropikind Files Drive folder. Upload uses your existing sync URL and token. Offline uploads retry when you reconnect.</p>
+  </div>
+  <div class="panel recpanel">
+    <div class="recrow">
+      <span id="recCount">0 records saved</span>
+      <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
     </div>
-    <div class="subgroup">
-      <label>DR/BO receipt photo (optional)</label>
-      <p class="save-note">Keep the full paper visible. It is paired using the same Visit Code.</p>
-      <div class="row"><button id="receiptTake" class="gold">Take receipt photo</button><button id="receiptUpload" class="ghost">Upload receipt</button></div>
-      <input id="receiptCam" type="file" accept="image/*" capture="environment" class="hidden">
-      <input id="receiptFile" type="file" accept="image/*" class="hidden">
-      <canvas id="receiptPreview" style="display:none;width:100%;height:auto;margin-top:14px;border-radius:10px"></canvas>
-      <div class="row"><button id="receiptSave" class="gold" disabled>Save receipt</button><button id="receiptDownload" class="ghost" disabled>Download receipt</button></div>
-      <div class="row"><button id="receiptRetake" class="ghost" disabled>Retake receipt</button><button id="receiptRemove" class="ghost" disabled>Remove receipt</button></div>
+    <div class="sync-status off" id="syncStatus">Cloud sync off — add your Google Sheet link</div>
+    <div class="sync-cfg hidden" id="syncCfg">
+      <label>Google Sheet Web App URL</label>
+      <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">
+      <label>Secret token (must match the script)</label>
+      <input type="text" id="syncTokIn" autocomplete="off" placeholder="e.g. tropikind2026">
+      <p class="hint">Paste the Web App URL you get after deploying the Apps Script to your sheet. The token is optional but recommended.</p>
+      <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
     </div>
-  </section>
-
-  <!-- 5. SAVE -->
-  <section class="step-card">
-    <div class="step-head">
-      <div class="step-no">5</div>
-      <div class="step-copy"><h2 class="step-title">Save &amp; Sync</h2><p class="step-sub">Save the visit. Google Sheet and Drive sync run in the background.</p></div>
+    <div class="row">
+      <button id="btnSyncNow" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>Sync now</button>
+      <button id="btnExport" class="ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export CSV</button>
+      <button id="btnClear" class="ghost danger">Clear</button>
     </div>
+  </div>
 
-    <div class="save-shell">
-      <div class="row"><button id="btnSave" class="gold" disabled>Save visit photo</button></div>
-      <div class="row"><button id="btnDownload" class="ghost" disabled>Download photo</button></div>
-      <button class="linkbtn" id="btnGallery">Save to Gallery manually</button>
-      <div class="save-note" id="saveNote">Add a photo first.</div>
-    </div>
-
-    <div class="subgroup">
-      <div id="mediaStatus" class="sync-status off">Checking photo queue…</div>
-      <button id="mediaRetry" class="ghost">Upload / retry photos</button>
-    </div>
-
-    <button class="admin-toggle ghost" id="adminToggle">Admin / Sync Tools</button>
-    <div id="adminTools" class="hidden">
-
-      <div class="subgroup" id="weeklySetAdmin">
-        <div class="subgroup-title">Weekly Refill Set — Admin Upload</div>
-        <p class="save-note">One CSV may contain all stores and multiple delivery dates within the week.</p>
-        <div class="field">
-          <label for="targetCsv">Weekly set CSV</label>
-          <input type="file" id="targetCsv" accept=".csv,text/csv">
-        </div>
-        <button class="ghost" id="importTargetSet">Upload / Update Weekly Set</button>
-        <div id="targetImportStatus" class="sync-status off" style="margin-top:9px">CSV columns: Delivery Date, Store, Mingles Target, RTE Target</div>
-      </div>
-
-      <div class="subgroup recpanel">
-        <div class="recrow">
-          <span id="recCount">0 records saved</span>
-          <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
-        </div>
-        <div class="sync-status off" id="syncStatus">Cloud sync off — Apps Script /exec URL missing</div>
-        <div class="sync-cfg hidden" id="syncCfg">
-          <label>Apps Script Web App /exec URL</label>
-          <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" value="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec">
-          <label>Secret token</label>
-          <input type="text" id="syncTokIn" autocomplete="off" value="tropikind2026">
-          <p class="hint"><b>Google Sheet:</b> <a href="https://docs.google.com/spreadsheets/d/1eMwadrMAWwNtzaE4fBsGG2gSdvUNc8zI1F0QJFP1KuE/edit" target="_blank" rel="noopener">Open Tropikind Sheet</a><br>
-          <b>Token:</b> tropikind2026</p>
-          <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
-        </div>
-        <div class="row">
-          <button id="btnSyncNow" class="ghost">Sync now</button>
-          <button id="btnExport" class="ghost">Export CSV</button>
-          <button id="btnClear" class="ghost danger">Clear</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="row"><button id="newVisit" class="ghost">Start New Visit</button></div>
-  </section>
-
-  <div class="foot">TROPIKIND® · Delivery Monitoring · Field documentation</div>
+  <div class="foot">TROPIKIND® · One of a kind · Field documentation</div>
 </div>
 
 <div class="img-overlay" id="imgOverlay">
@@ -513,7 +596,7 @@
 (function(){
   "use strict";
 
-  var BRANCHES = ["Acacia","Agdao","Anda","Asano GSIS","Bajada","Bangkal 1","Bangkal 3","Bucana","Buhangin KM5","Buhangin KM6","Cabaguio","Cabantian 1","Cabantian 2","Carpenter","Central Park","Centrale","Claveria","Communal","Damosa 2","Damosa-1","DCCS Washington","DMC","Doverlane","Dumnalas","Ecoland","El Rio","Fatima","Flyover","Garcia Heights","GSIS","Guerrero 1","Indangan Malagamot","J4","J5","Kumon Obrero","Lanang","Maa 1 - Gem","Maa 2","Mabini","Madapo","Malvar","Marfori","Matina Crossing","MDRMC","MTS","N. Torres","NHA Buhangin","Obrero 1","Panorama","Ponce","Quimpo","Rizal","Roxas","San Antonio Agdao","Sandawa","Sasa","St. Mary Buhangin","Sta.Ana","UM Matina"];
+  var BRANCHES = ["Acacia","Agdao","Anda","Asano GSIS","Bajada","Bangkal 1","Bangkal 3","Bucana","Buhangin KM5","Buhangin KM6","Cabaguio","Cabantian 1","Cabantian 2","Carpenter","Central Park","Centrale","Claveria","Communal","Damosa-1","Damosa 2","DCCS Washington","DMC","Doverlane","Dumnalas","Ecoland","El Rio","Fatima","Flyover","Garcia Heights","GSIS","Guerrero 1","Indangan Malagamot","J4","J5","Kumon Obrero","Lanang","Maa 1 - Gem","Maa 2","Mabini","Madapo","Malvar","Marfori","Matina Crossing","MDRMC","MTS","N. Torres","NHA Buhangin","Obrero 1","Panorama","Ponce","Quimpo","Rizal","Roxas","San Antonio Agdao","Sandawa","Sasa","St. Mary Buhangin","Sta.Ana","UM Matina"];
   var STAFF = ["Dennis","Laydan","Luigi","Marlon","NepNep","Rey","Roxanne"];
 
   // ---------- storage helpers ----------
@@ -529,175 +612,14 @@
       btnDownload=$("btnDownload"), saveNote=$("saveNote");
 
   var pctx = preview.getContext("2d");
-  var base = document.createElement("canvas"); // active full-res source
-  var stagePhotos={
-    BEFORE:{canvas:document.createElement("canvas"),has:false},
-    AFTER:{canvas:document.createElement("canvas"),has:false}
-  };
+  var base = document.createElement("canvas"); // full-res source
   var hasImage=false;
-
-  function copyCanvas(src,dst){
-    dst.width=src.width; dst.height=src.height;
-    if(src.width&&src.height) dst.getContext("2d").drawImage(src,0,0);
-  }
-  function updatePhotoStageStatus(){
-    ["BEFORE","AFTER"].forEach(function(s){
-      var el=$(s==="BEFORE"?"beforePhotoStatus":"afterPhotoStatus");
-      if(!el)return;
-      var ready=!!stagePhotos[s].has;
-      el.classList.toggle("ready",ready);
-      var sp=el.querySelector("span"); if(sp)sp.textContent=ready?"Photo ready":"Not taken";
-    });
-  }
-  function restoreStagePhoto(){
-    var slot=stagePhotos[state.stage];
-    hasImage=!!(slot&&slot.has);
-    if(hasImage){
-      copyCanvas(slot.canvas,base);
-      empty.classList.add("hidden"); preview.style.display="block";
-      btnRetake.classList.remove("hidden"); btnSave.disabled=false; btnDownload.disabled=false;
-      saveNote.textContent=state.stage+" photo ready. The stamp updates live.";
-      draw();
-    }else{
-      base.width=0;base.height=0;
-      preview.style.display="none"; empty.classList.remove("hidden");
-      btnRetake.classList.add("hidden"); btnSave.disabled=true; btnDownload.disabled=true;
-      saveNote.textContent="Add the "+state.stage+" photo first.";
-    }
-    updatePhotoStageStatus();
-  }
-  function clearAllStagePhotos(){
-    ["BEFORE","AFTER"].forEach(function(s){
-      stagePhotos[s].has=false;stagePhotos[s].canvas.width=0;stagePhotos[s].canvas.height=0;
-    });
-    restoreStagePhoto();
-  }
 
   var state = {
     stage: LS.get("tk_stage","AFTER"),
     branch: LS.get("tk_branch","Communal"),
     staff: LS.get("tk_staff","Laydan")
   };
-
-  var refillTargets={};
-  var refillTargetMeta={week:"",date:""};
-  function targetKey(s){return String(s||"").trim().toLowerCase();}
-  function inventoryNumber(id){
-    var el=$(id), n=Number(el&&el.value);
-    return isFinite(n)&&n>=0?n:0;
-  }
-  function selectedVisitDate(){
-    var v=$("when").value;
-    if(!v)return "";
-    var d=new Date(v);
-    if(isNaN(d.getTime()))return "";
-    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-  }
-  function renderRefillTargets(){
-    var t=refillTargets[targetKey(state.branch)]||null;
-    var tm=$("targetMingles"),tr=$("targetRTE"),sm=$("suggestMingles"),sr=$("suggestRTE"),note=$("targetRefillNote");
-    if(!tm||!tr||!sm||!sr)return;
-    if(!t){
-      tm.textContent=tr.textContent=sm.textContent=sr.textContent="—";
-      if(note){
-        var meta=(refillTargetMeta.week?refillTargetMeta.week+" · ":"")+(refillTargetMeta.date||selectedVisitDate()||"");
-        note.textContent=(meta?meta+" — ":"")+"No target found for "+(state.branch||"this store")+".";
-      }
-      return;
-    }
-    var mv=(t.mingles===""||t.mingles==null)?null:Number(t.mingles);
-    var rv=(t.rte===""||t.rte==null)?null:Number(t.rte);
-    tm.textContent=(mv!=null&&isFinite(mv))?String(mv):"—";
-    tr.textContent=(rv!=null&&isFinite(rv))?String(rv):"—";
-    sm.textContent=(mv!=null&&isFinite(mv))?String(Math.max(0,mv-inventoryNumber("biMingles"))):"—";
-    sr.textContent=(rv!=null&&isFinite(rv))?String(Math.max(0,rv-inventoryNumber("biRTE"))):"—";
-    if(note){
-      var label=(t.week||refillTargetMeta.week||"")+" · "+(t.deliveryDate||refillTargetMeta.date||selectedVisitDate());
-      note.textContent=label+" — Suggested Refill = Target Stock − Beginning Inventory.";
-    }
-  }
-  function loadRefillTargets(){
-    var url=(typeof syncURL==="function")?syncURL():"";
-    var date=selectedVisitDate();
-    refillTargets={}; refillTargetMeta={week:"",date:date};
-    if(!url||!navigator.onLine||!date){renderRefillTargets();return;}
-    var join=url.indexOf("?")>=0?"&":"?";
-    fetch(url+join+"action=targets&token="+encodeURIComponent(syncTok())+"&date="+encodeURIComponent(date),{method:"GET",cache:"no-store"})
-      .then(function(res){return res.json();})
-      .then(function(data){
-        if(!data||!data.ok||!Array.isArray(data.targets))throw new Error((data&&data.error)||"Target lookup failed");
-        refillTargets={};
-        refillTargetMeta={week:data.week||"",date:data.date||date};
-        data.targets.forEach(function(x){
-          if(x&&x.store)refillTargets[targetKey(x.store)]={mingles:x.mingles,rte:x.rte,week:x.week||data.week||"",deliveryDate:x.deliveryDate||date};
-        });
-        renderRefillTargets();
-      })
-      .catch(function(){renderRefillTargets();});
-  }
-
-  function parseCsvRows(text){
-    var rows=[], row=[], field="", quoted=false;
-    for(var i=0;i<text.length;i++){
-      var ch=text[i], nx=text[i+1];
-      if(quoted){
-        if(ch==='"' && nx==='"'){field+='"';i++;}
-        else if(ch==='"'){quoted=false;}
-        else field+=ch;
-      }else{
-        if(ch==='"')quoted=true;
-        else if(ch===','){row.push(field);field="";}
-        else if(ch==='\n'){row.push(field);rows.push(row);row=[];field="";}
-        else if(ch!=='\r')field+=ch;
-      }
-    }
-    if(field!==""||row.length){row.push(field);rows.push(row);}
-    return rows.filter(function(r){return r.some(function(v){return String(v||"").trim()!=="";});});
-  }
-  function normalizeCsvHeader(s){return String(s||"").trim().toLowerCase().replace(/[\s_-]+/g," ");}
-
-  $("importTargetSet").addEventListener("click",function(){
-    var file=$("targetCsv").files&&$("targetCsv").files[0];
-    var status=$("targetImportStatus");
-    if(!file){status.textContent="Choose a CSV file first.";status.className="sync-status err";return;}
-    if(!syncURL()){status.textContent="Missing Apps Script /exec URL.";status.className="sync-status err";return;}
-    var reader=new FileReader();
-    reader.onload=function(){
-      try{
-        var raw=parseCsvRows(String(reader.result||""));
-        if(raw.length<2)throw new Error("CSV has no data rows.");
-        var hdr=raw[0].map(normalizeCsvHeader);
-        function idx(){
-          for(var a=0;a<arguments.length;a++){var k=hdr.indexOf(arguments[a]);if(k>=0)return k;}
-          return -1;
-        }
-        var dateI=idx("delivery date","date");
-        var storeI=idx("store","outlet","branch");
-        var mI=idx("mingles target","mingles");
-        var rI=idx("rte target","rte");
-        if(dateI<0||storeI<0||mI<0||rI<0)throw new Error("Required columns: Delivery Date, Store, Mingles Target, RTE Target.");
-        var rows=raw.slice(1).map(function(r){
-          return {deliveryDate:String(r[dateI]||"").trim(),store:String(r[storeI]||"").trim(),
-            mingles:String(r[mI]||"").trim(),rte:String(r[rI]||"").trim()};
-        }).filter(function(r){return r.deliveryDate&&r.store;});
-        if(!rows.length)throw new Error("No valid target rows found.");
-        status.textContent="Uploading "+rows.length+" target rows…";status.className="sync-status wait";
-        fetch(syncURL(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
-          body:JSON.stringify({action:"importTargetSet",token:syncTok(),sourceFile:file.name,rows:rows})})
-          .then(function(res){return res.json();})
-          .then(function(data){
-            if(!data||!data.ok)throw new Error((data&&data.error)||"Import failed");
-            status.textContent="Weekly set saved ✓ "+data.inserted+" added, "+data.updated+" updated. "+(data.weeks||[]).join(", ");
-            status.className="sync-status ok";
-            loadRefillTargets();
-          })
-          .catch(function(err){status.textContent="Upload failed — "+err.message;status.className="sync-status err";});
-      }catch(err){
-        status.textContent="CSV error — "+err.message;status.className="sync-status err";
-      }
-    };
-    reader.readAsText(file);
-  });
 
 
   // Image pairing is separate from the record and Google Sheet payload.
@@ -768,7 +690,7 @@
   $('newVisit').addEventListener('click',function(){
     if(!confirm('Start a new visit code? Save both current photos first. Current photo previews will be cleared.'))return;
     visitCode=makeVisitCode();LS.set('tk_photo_visit_code',visitCode);$('visitCodeLabel').textContent=visitCode;
-    clearAllStagePhotos();clearReceipt();toast('New visit · '+visitCode);
+    btnRetake.click();clearReceipt();toast('New visit · '+visitCode);
   });
   ['branch','when','staff'].forEach(function(id){$(id).addEventListener('change',drawReceipt);});
 
@@ -785,7 +707,7 @@
   fillSelect($("branch"), BRANCHES, "tk_custom_branch", state.branch);
   fillSelect($("staff"), STAFF, "tk_custom_staff", state.staff);
 
-  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); renderRefillTargets(); draw(); });
+  $("branch").addEventListener("change",function(){ state.branch=this.value; LS.set("tk_branch",state.branch); draw(); });
   $("staff").addEventListener("change",function(){ state.staff=this.value; LS.set("tk_staff",state.staff); draw(); });
 
   $("addBranch").addEventListener("click",function(){
@@ -807,17 +729,8 @@
       b.setAttribute("aria-pressed", b.dataset.v===v ? "true":"false");
     });
 
-    // Operator flow: BEFORE = Beginning Inventory + Target + Remarks.
-    // AFTER = Actual Refill + BO + Receipt; no remarks.
+    // BEFORE = Beginning Inventory only. Refill / BO is not allowed.
     $("beginningInventoryField").style.display=(v==="BEFORE")?"":"none";
-    if($("targetRefillBox")) $("targetRefillBox").style.display=(v==="BEFORE")?"":"none";
-    if($("remarksField")) $("remarksField").style.display=(v==="BEFORE")?"":"none";
-    if($("afterCountsGroup")) $("afterCountsGroup").style.display=(v==="AFTER")?"":"none";
-    if($("receiptPanel")) $("receiptPanel").style.display=(v==="AFTER")?"":"none";
-    if($("detailsTitle")) $("detailsTitle").textContent=(v==="BEFORE"?"BEFORE Details":"AFTER Details");
-    if($("detailsSub")) $("detailsSub").textContent=(v==="BEFORE"
-      ?"Beginning Inventory, weekly target and remarks."
-      :"Actual refill and Bad Order (BO). Remarks stay with BEFORE.");
 
     if(v==="BEFORE" && typeof counts==="object" && counts){
       ["Mingles","Singles","RTE"].forEach(function(s){
@@ -829,8 +742,6 @@
     if(typeof skuBox!=="undefined" && skuBox) renderSkuCounts();
 
     composeRemarks();
-    if(btnCam) btnCam.lastChild.nodeValue = " Take "+v+" photo";
-    restoreStagePhoto();
   }
   seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(b) setStage(b.dataset.v); });
   setStage(state.stage);
@@ -879,30 +790,15 @@
     });
   }
   renderProd(); renderSkuCounts();
-  updatePhotoStageStatus();
 
   // ---------- date/time ----------
   function pad(n){return (n<10?"0":"")+n;}
   function toLocalInput(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); }
-  function isoWeek(d){
-    var x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-    var day=x.getUTCDay()||7; x.setUTCDate(x.getUTCDate()+4-day);
-    var yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));
-    return Math.ceil((((x-yearStart)/86400000)+1)/7);
-  }
-  function updateWeek(){
-    var v=$("when").value, d=v?new Date(v):new Date(); if(isNaN(d.getTime()))d=new Date();
-    var el=$("weekNo"); if(el)el.textContent="Week "+isoWeek(d);
-  }
-  function setNow(){ $("when").value=toLocalInput(new Date()); updateWeek(); draw(); }
+  function setNow(){ $("when").value=toLocalInput(new Date()); draw(); }
   $("btnNow").addEventListener("click", setNow);
-  $("when").addEventListener("change", function(){updateWeek();loadRefillTargets();draw();});
+  $("when").addEventListener("change", draw);
   setNow();
   $("beginningInventoryField").style.display=(state.stage==="BEFORE")?"":"none";
-  if($("targetRefillBox")) $("targetRefillBox").style.display=(state.stage==="BEFORE")?"":"none";
-  if($("remarksField")) $("remarksField").style.display=(state.stage==="BEFORE")?"":"none";
-  if($("afterCountsGroup")) $("afterCountsGroup").style.display=(state.stage==="AFTER")?"":"none";
-  if($("receiptPanel")) $("receiptPanel").style.display=(state.stage==="AFTER")?"":"none";
   composeRemarks();
 
     function inventoryVal(id){
@@ -911,12 +807,6 @@
   }
 
   function composeRemarks(){
-    // Remarks belong to BEFORE only. AFTER records intentionally carry no remarks.
-    if(state.stage!=="BEFORE"){
-      $("remarks").value="";
-      draw();
-      return;
-    }
     var parts=[];
     var selected=Array.prototype.map.call(
       document.querySelectorAll('input[name="remarkOption"]:checked'),
@@ -926,11 +816,14 @@
 
     selected.forEach(function(v){ parts.push(v); });
     if(other) parts.push(other);
-    parts.push(
-      "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
-      "; Singles "+inventoryVal("biSingles")+
-      "; RTE "+inventoryVal("biRTE")
-    );
+
+    if(state.stage==="BEFORE"){
+      parts.push(
+        "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
+        "; Singles "+inventoryVal("biSingles")+
+        "; RTE "+inventoryVal("biRTE")
+      );
+    }
 
     $("remarks").value=parts.join(" | ");
     draw();
@@ -941,7 +834,7 @@
   });
   $("otherRemarks").addEventListener("input", composeRemarks);
   ["biMingles","biSingles","biRTE"].forEach(function(id){
-    $(id).addEventListener("input", function(){ composeRemarks(); renderRefillTargets(); });
+    $(id).addEventListener("input", composeRemarks);
   });
 
   // ---------- photo input (native camera or gallery) ----------
@@ -956,13 +849,10 @@
     var url = URL.createObjectURL(f);
     var img = new Image();
     img.onload = function(){
-      var slot=stagePhotos[state.stage];
-      slot.canvas.width=img.naturalWidth||img.width;
-      slot.canvas.height=img.naturalHeight||img.height;
-      if(!slot.canvas.width || !slot.canvas.height){ toast("Couldn't read that image."); URL.revokeObjectURL(url); return; }
-      slot.canvas.getContext("2d").drawImage(img,0,0,slot.canvas.width,slot.canvas.height);
-      slot.has=true;
-      copyCanvas(slot.canvas,base);
+      base.width  = img.naturalWidth  || img.width;
+      base.height = img.naturalHeight || img.height;
+      if(!base.width || !base.height){ toast("Couldn't read that image."); URL.revokeObjectURL(url); return; }
+      base.getContext("2d").drawImage(img,0,0,base.width,base.height);
       URL.revokeObjectURL(url);
       onImageReady();
     };
@@ -973,21 +863,16 @@
   fileCam.addEventListener("change", function(){ loadFromInput(fileCam); });
 
   btnRetake.addEventListener("click", function(){
-    var slot=stagePhotos[state.stage];
-    if(slot){slot.has=false;slot.canvas.width=0;slot.canvas.height=0;}
-    hasImage=false; base.width=0;base.height=0;
-    preview.style.display="none"; empty.classList.remove("hidden");
+    hasImage=false; preview.style.display="none"; empty.classList.remove("hidden");
     btnRetake.classList.add("hidden"); btnSave.disabled=true; btnDownload.disabled=true;
-    saveNote.textContent="Add the "+state.stage+" photo first.";
-    updatePhotoStageStatus();
+    saveNote.textContent="Add a photo first — the stamp is baked into the saved image.";
   });
 
   function onImageReady(){
     hasImage=true; empty.classList.add("hidden");
     preview.style.display="block"; btnRetake.classList.remove("hidden");
     btnSave.disabled=false; btnDownload.disabled=false;
-    saveNote.textContent=state.stage+" photo ready. The stamp updates live. Tap save to keep it.";
-    updatePhotoStageStatus();
+    saveNote.textContent="Looks right? The stamp updates live. Tap save to keep it.";
     draw();
   }
 
@@ -1112,12 +997,9 @@
 
     text('TROPIKIND',H*.055,34,'#f2d27a',800);
     text('DELIVERY MONITORING',H*.093,15);
-    text(state.branch||'—',H*.145,28,'#ffffff',800);
-    text(state.stage,H*.205,38,after?'#5be08a':'#ffab2e',800);
-    text(dt.date,H*.255,22);text(dt.time,H*.292,22);
-    var wd=$("when").value?new Date($("when").value):new Date(); if(isNaN(wd.getTime()))wd=new Date();
-    text('WEEK '+isoWeek(wd),H*.326,18,'#f2d27a',800);
-    text('PHOTO '+W+' × '+H+' px',H*.355,14,'#9fb2c9',700);
+    text(state.branch||'—',H*.155,28,'#ffffff',800);
+    text(state.stage,H*.225,38,after?'#5be08a':'#ffab2e',800);
+    text(dt.date,H*.28,22);text(dt.time,H*.317,22);
 
     if(after){
       var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});
@@ -1147,18 +1029,10 @@
         metric('BO',c.bo,y+block*.69,'#ffab6b');
       });
 
-      // AFTER intentionally has no remarks panel.
+      if(comments) drawCommentsBox(H*.67,H*.855);
     }else{
-      // BEFORE: show weekly target and suggested refill, then beginning inventory / remarks.
-      var tm=$('targetMingles') ? $('targetMingles').textContent : '—';
-      var tr=$('targetRTE') ? $('targetRTE').textContent : '—';
-      var sm=$('suggestMingles') ? $('suggestMingles').textContent : '—';
-      var sr=$('suggestRTE') ? $('suggestRTE').textContent : '—';
-      ctx.fillStyle='rgba(3,16,31,.48)'; rr(ctx,x,H*.385,innerW,H*.115,10*unit); ctx.fill();
-      text('WEEKLY REFILL TARGET',H*.405,17,'#f2d27a',800);
-      text('Mingles  Target '+tm+'  ·  Suggested '+sm,H*.445,17,'#ffffff',700);
-      text('RTE      Target '+tr+'  ·  Suggested '+sr,H*.477,17,'#ffffff',700);
-      if(comments) drawCommentsBox(H*.52,H*.855);
+      // BEFORE: use the large middle area for readable visit comments.
+      if(comments) drawCommentsBox(H*.37,H*.855);
     }
 
     text('Staff: '+(state.staff||'—'),H*.895,24);
@@ -1284,7 +1158,6 @@
     LS.set("tk_sync_token_revision","paired-photos-v2-15");
   }
   var DEPLOYED_SYNC_URL="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec";
-  var DEPLOYED_SHEET_URL="https://docs.google.com/spreadsheets/d/1eMwadrMAWwNtzaE4fBsGG2gSdvUNc8zI1F0QJFP1KuE/edit";
   // Apply this deployment once, including devices that remember an older URL.
   // Subsequent manual sync-setting changes remain editable.
   if(LS.get("tk_sync_deployment","")!==DEPLOYED_SYNC_URL){
@@ -1307,7 +1180,7 @@
   }
   function setSyncStatus(txt, cls){ var el=$("syncStatus"); if(el){ el.textContent=txt; el.className="sync-status "+cls; } }
   function updateSyncStatus(){
-    if(!syncURL()){ setSyncStatus("Cloud sync off — Apps Script /exec URL missing","off"); return; }
+    if(!syncURL()){ setSyncStatus("Cloud sync off — add your Google Sheet link","off"); return; }
     var log=getLog(), pend=log.filter(function(r){return !r.synced;}).length;
     if(pend===0){ setSyncStatus((log.length?("All "+log.length+" synced to Google Sheet \u2713"):"Connected \u2014 no records yet"),"ok"); }
     else { setSyncStatus(pend+" record"+(pend===1?"":"s")+" waiting"+(navigator.onLine?"":" (offline)"),"wait"); }
@@ -1315,7 +1188,7 @@
   var syncing=false;
   function syncNow(manual){
     var url=syncURL();
-    if(!url){ if(manual) toast("Apps Script /exec URL is missing in Sync settings"); updateSyncStatus(); return; }
+    if(!url){ if(manual) toast("Add your Google Sheet link in Sync settings first"); updateSyncStatus(); return; }
     if(syncing) return;
     var pend=pendingRecords();
     if(!pend.length){ if(manual) toast("Nothing to sync \u2014 all up to date"); updateSyncStatus(); return; }
@@ -1387,34 +1260,8 @@
       label.className='sync-status '+(mediaLastError?'err':jobs.length?'wait':'ok');
     }catch(err){$('mediaStatus').textContent='Photos can save locally, but Drive queue is unavailable: '+err.message;}
   }
-  // v36.3: Drive copy is resized before upload. Full-resolution 12–50 MP camera JPEGs
-  // became 5–20 MB base64 POST bodies, which mobile Safari/Android drop mid-transfer
-  // ("Load failed"). Local gallery/download copies stay full resolution.
-  var UPLOAD_MAX_EDGE=2048, UPLOAD_QUALITY=0.82, UPLOAD_KEEP_BYTES=1.5*1024*1024;
-  function shrinkForUpload(blob){
-    return new Promise(function(resolve){
-      try{
-        var url=URL.createObjectURL(blob),img=new Image();
-        img.onload=function(){
-          var w=img.naturalWidth,h=img.naturalHeight;URL.revokeObjectURL(url);
-          if(!w||!h){resolve(blob);return;}
-          var s=Math.min(1,UPLOAD_MAX_EDGE/Math.max(w,h));
-          if(s>=1&&blob.size<=UPLOAD_KEEP_BYTES){resolve(blob);return;}
-          var c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*s));c.height=Math.max(1,Math.round(h*s));
-          var ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-          ctx.drawImage(img,0,0,c.width,c.height);
-          c.toBlob(function(b){c.width=0;c.height=0;resolve(b&&b.size&&b.size<blob.size?b:blob);},'image/jpeg',UPLOAD_QUALITY);
-        };
-        img.onerror=function(){URL.revokeObjectURL(url);resolve(blob);};
-        img.src=url;
-      }catch(e){resolve(blob);}
-    });
-  }
-  function fmtMB(bytes){return (bytes/1048576).toFixed(bytes<1048576?2:1)+' MB';}
   async function queueVisitMedia(items,record,code){
     try{
-      var upBlobs=await Promise.all(items.map(function(item){return shrinkForUpload(item.blob);}));
-      items=items.map(function(item,i){return {blob:upBlobs[i],name:item.name};});
       for(var i=0;i<items.length;i++){
         if(items[i].blob.size>18*1024*1024)throw new Error('Photo exceeds the 18 MB Drive upload limit. Local saving still works.');
       }
@@ -1434,29 +1281,12 @@
   function blobBase64(blob){
     return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(String(reader.result).split(',')[1]);};reader.onerror=function(){reject(reader.error);};reader.readAsDataURL(blob);});
   }
-  async function mediaRequest(url,payload,label){
-    label=label||'Apps Script';
-    var controller=new AbortController(),timedOut=false,timer=setTimeout(function(){timedOut=true;controller.abort();},120000);
+  async function mediaRequest(url,payload){
+    var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},120000);
     try{
-      var res;
-      try{
-        res=await fetch(url,{method:payload?'POST':'GET',cache:'no-store',redirect:'follow',signal:controller.signal,
-          headers:payload?{'Content-Type':'text/plain;charset=utf-8'}:undefined,
-          body:payload?JSON.stringify(payload):undefined});
-      }catch(netErr){
-        if(timedOut)throw new Error(label+' timed out after 120 s (slow signal?). Photo kept for retry.');
-        throw new Error(label+' failed: '+(netErr&&netErr.message?netErr.message:'network/load error')+
-          '. Either the connection dropped or Apps Script crashed before replying — check Apps Script › Executions.');
-      }
-      if(!res)throw new Error(label+': Apps Script returned no response.');
-      var text=await res.text();
-      var data;
-      try{data=JSON.parse(text);}
-      catch(parseErr){
-        throw new Error(label+': Apps Script returned a non-JSON response (HTTP '+res.status+') — usually a login/permission page; check deployment access is "Anyone" and Drive is authorized.');
-      }
-      if(!data||!data.ok)throw new Error(data&&data.error||('Drive upload refused (HTTP '+res.status+')'));
-      return data;
+      var res=await fetch(url,{method:payload?'POST':'GET',cache:'no-store',signal:controller.signal,
+        headers:payload?{'Content-Type':'text/plain;charset=utf-8'}:undefined,body:payload?JSON.stringify(payload):undefined});
+      var data=await res.json();if(!data||!data.ok)throw new Error(data&&data.error||'Drive upload refused');return data;
     }finally{clearTimeout(timer);}
   }
   async function syncMediaQueue(){
@@ -1466,19 +1296,16 @@
     try{
       var jobs=await mediaStore('all');if(!jobs.length)return;
       jobs.sort(function(a,b){return a.createdAt-b.createdAt||a.id.localeCompare(b.id);});
-      var url=syncURL(),token=syncTok();
+      var url=syncURL(),token=syncTok(),service=await mediaRequest(url);
+      if(service.mediaVersion!==2||!service.receiptSupported)throw new Error('Deploy the updated Delivery.gs first, then tap Upload / retry photos.');
       for(var i=0;i<jobs.length;i++){
         var job=jobs[i];
-        // Use POST as the connectivity/capability check. This avoids Safari/PWA
-        // "Load failed" errors from a preliminary cross-origin GET to Apps Script.
-        var ack=await mediaRequest(url,{token:token,device:job.record.device,records:[job.record]},'Step 1/2 visit record sync');
+        // Ensure the original camera key exists before linking an uploaded file.
+        var ack=await mediaRequest(url,{token:token,device:job.record.device,records:[job.record]});
         if(!ack.keys||ack.keys.indexOf(job.record.key)<0)throw new Error('Visit sync was not acknowledged; photos remain queued.');
-        if(ack.mediaVersion!==2||!ack.receiptSupported)throw new Error('Deploy the updated Delivery.gs first, then tap Upload / retry photos.');
-        var upBlob=await shrinkForUpload(job.blob); // also shrinks jobs queued by v36.2 and older
         var reply=await mediaRequest(url,{action:'uploadMedia',token:token,cameraKey:job.record.key,
           mediaType:job.mediaType,mimeType:'image/jpeg',photoCode:job.photoCode,expectedReceipt:job.expectedReceipt,
-          branch:job.record.branch,when:job.record.when,data:await blobBase64(upBlob)},
-          'Step 2/2 '+job.mediaType+' upload ('+fmtMB(upBlob.size)+', '+(i+1)+' of '+jobs.length+')');
+          branch:job.record.branch,when:job.record.when,data:await blobBase64(job.blob)});
         if(reply.cameraKey!==job.record.key||reply.mediaType!==job.mediaType||!reply.fileUrl)throw new Error('Incomplete Drive upload response; photo kept for retry.');
         await mediaStore('delete',job.id);
       }
@@ -1488,8 +1315,6 @@
   $('mediaRetry').addEventListener('click',function(){syncMediaQueue();});
   window.addEventListener('online',function(){syncMediaQueue();});
   setTimeout(function(){updateMediaStatus();syncMediaQueue();},1800);
-  setTimeout(loadRefillTargets,2200);
-  window.addEventListener("online",loadRefillTargets);
 
 
   // show stamped image so the user can long-press → Save image (works in any Android browser)
@@ -1577,16 +1402,6 @@
     });
   }
   window.addEventListener('appinstalled', function(){ if(btn) btn.classList.add('hidden'); });
-
-  var adminToggle=document.getElementById("adminToggle"), adminTools=document.getElementById("adminTools");
-  if(adminToggle && adminTools){
-    adminToggle.addEventListener("click",function(){
-      var open=adminTools.classList.contains("hidden");
-      adminTools.classList.toggle("hidden",!open);
-      adminToggle.textContent=open?"Hide Admin / Sync Tools":"Admin / Sync Tools";
-    });
-  }
-
 })();
 </script>
 </body>
