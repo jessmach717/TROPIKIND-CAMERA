@@ -25,6 +25,16 @@ const TK = {
   SPREADSHEET_ID: '1eMwadrMAWwNtzaE4fBsGG2gSdvUNc8zI1F0QJFP1KuE'
 };
 
+const TK_TARGET_HEADERS = [
+  'Week',
+  'Delivery Date',
+  'Store',
+  'Mingles Target',
+  'RTE Target',
+  'Updated At',
+  'Source File'
+];
+
 const TK_HEADERS = [
   'Week',
   'Date',
@@ -76,10 +86,16 @@ function doGet(e) {
 
     if (action === 'targets') {
       verifyToken_(e && e.parameter ? e.parameter.token : '');
+      const date = normalizeDateText_(e && e.parameter ? e.parameter.date : '');
+      const week = String(e && e.parameter && e.parameter.week || '').trim().toUpperCase();
+      const store = String(e && e.parameter && e.parameter.store || '').trim();
+      const targets = readStoreRefillTargets_({ date: date, week: week, store: store });
       return json_({
         ok: true,
         service: 'Tropikind Delivery',
-        targets: readStoreRefillTargets_(),
+        date: date,
+        week: date ? isoWeekLabel_(parseTargetDate_(date)) : week,
+        targets: targets,
         targetsAvailable: targetSheetExists_()
       });
     }
@@ -94,6 +110,7 @@ function doGet(e) {
       mediaVersion: TK.MEDIA_VERSION,
       receiptSupported: true,
       targetOnly: true,
+      weeklyTargetSetSupported: true,
       storeRefillTargetsSupported: true
     });
   } catch (err) {
@@ -113,6 +130,8 @@ function doPost(e) {
     let result;
     if (action === 'uploadMedia') {
       result = uploadMedia_(payload, requestId);
+    } else if (action === 'importTargetSet') {
+      result = importTargetSet_(payload);
     } else {
       if (!Array.isArray(payload.records)) throw new Error('No records supplied.');
       result = saveRecords_(payload);
@@ -498,7 +517,7 @@ function parseBranch_(branch) {
   };
 }
 
-/* -------------------- STORE REFILL TARGETS -------------------- */
+/* -------------------- STORE REFILL TARGETS / WEEKLY SETS -------------------- */
 
 function getSpreadsheet_() {
   return TK.SPREADSHEET_ID
@@ -511,105 +530,171 @@ function targetSheetExists_() {
   return !!(ss && ss.getSheetByName(TK.TARGET_SHEET_NAME));
 }
 
-function readStoreRefillTargets_() {
+function ensureTargetSheet_() {
   const ss = getSpreadsheet_();
-  const sheet = ss && ss.getSheetByName(TK.TARGET_SHEET_NAME);
-  if (!sheet || sheet.getLastRow() < 2) return [];
+  let sheet = ss.getSheetByName(TK.TARGET_SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(TK.TARGET_SHEET_NAME);
 
-  const values = sheet.getRange(1, 1, sheet.getLastRow(), Math.max(3, sheet.getLastColumn())).getDisplayValues();
-  const headers = values[0].map(function(v) { return String(v || '').trim(); });
-  const storeIdx = headers.indexOf('Store');
-  const minglesIdx = headers.indexOf('Mingles Target');
-  const rteIdx = headers.indexOf('RTE Target');
+  const lastCol = Math.max(1, sheet.getLastColumn());
+  let headers = sheet.getRange(1, 1, 1, lastCol).getDisplayValues()[0].map(function(v) {
+    return String(v || '').trim();
+  });
 
-  if (storeIdx < 0 || minglesIdx < 0 || rteIdx < 0) {
-    throw new Error('Store Refill Targets must contain Store, Mingles Target, and RTE Target columns.');
+  if (sheet.getLastRow() === 0 || headers.join('').trim() === '') {
+    sheet.getRange(1, 1, 1, TK_TARGET_HEADERS.length).setValues([TK_TARGET_HEADERS]);
+    headers = TK_TARGET_HEADERS.slice();
+  } else {
+    const missing = TK_TARGET_HEADERS.filter(function(h) { return headers.indexOf(h) < 0; });
+    if (missing.length) {
+      sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+      headers = headers.concat(missing);
+    }
+  }
+  sheet.setFrozenRows(1);
+  return { sheet: sheet, headers: headers, map: headerMap_(headers) };
+}
+
+function normalizeDateText_(value) {
+  const s = String(value || '').trim();
+  if (!s) return '';
+  const d = parseTargetDate_(s);
+  return Utilities.formatDate(d, TK.TIMEZONE, 'yyyy-MM-dd');
+}
+
+function parseTargetDate_(value) {
+  const s = String(value || '').trim();
+  if (!s) throw new Error('Delivery Date is required.');
+
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
+
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]), 12, 0, 0);
+
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d;
+  throw new Error('Invalid Delivery Date: ' + s);
+}
+
+function readStoreRefillTargets_(filters) {
+  filters = filters || {};
+  const info = ensureTargetSheet_();
+  const sheet = info.sheet, map = info.map;
+  if (sheet.getLastRow() < 2) return [];
+
+  const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, info.headers.length).getDisplayValues();
+  const wantedDate = filters.date ? normalizeDateText_(filters.date) : '';
+  const wantedWeek = String(filters.week || '').trim().toUpperCase();
+  const wantedStore = String(filters.store || '').trim().toLowerCase();
+
+  const exact = [];
+  const defaults = [];
+
+  values.forEach(function(r) {
+    const store = String(r[map['Store']] || '').trim();
+    if (!store) return;
+
+    const rawDate = String(r[map['Delivery Date']] || '').trim();
+    const date = rawDate ? normalizeDateText_(rawDate) : '';
+    const week = String(r[map['Week']] || '').trim().toUpperCase() ||
+      (date ? isoWeekLabel_(parseTargetDate_(date)) : '');
+
+    if (wantedStore && store.toLowerCase() !== wantedStore) return;
+    if (wantedWeek && week && week !== wantedWeek) return;
+
+    const item = {
+      week: week,
+      deliveryDate: date,
+      store: store,
+      mingles: String(r[map['Mingles Target']] || '').trim(),
+      rte: String(r[map['RTE Target']] || '').trim()
+    };
+
+    if (wantedDate) {
+      if (date === wantedDate) exact.push(item);
+      else if (!date) defaults.push(item); // legacy/default fallback
+    } else {
+      exact.push(item);
+    }
+  });
+
+  return exact.length ? exact : defaults;
+}
+
+function importTargetSet_(payload) {
+  const rows = Array.isArray(payload.rows) ? payload.rows : [];
+  if (!rows.length) throw new Error('No target rows supplied.');
+
+  const sourceFile = String(payload.sourceFile || '').trim();
+  const info = ensureTargetSheet_();
+  const sheet = info.sheet, map = info.map, headers = info.headers;
+
+  const existing = {};
+  if (sheet.getLastRow() >= 2) {
+    const vals = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getDisplayValues();
+    vals.forEach(function(r, i) {
+      const store = String(r[map['Store']] || '').trim();
+      const rawDate = String(r[map['Delivery Date']] || '').trim();
+      if (!store || !rawDate) return;
+      const date = normalizeDateText_(rawDate);
+      existing[(date + '|' + store.toLowerCase())] = i + 2;
+    });
   }
 
-  return values.slice(1).map(function(r) {
-    return {
-      store: String(r[storeIdx] || '').trim(),
-      mingles: String(r[minglesIdx] || '').trim(),
-      rte: String(r[rteIdx] || '').trim()
-    };
-  }).filter(function(x) { return x.store; });
+  let inserted = 0, updated = 0;
+  const weeks = {};
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Weekly target import busy. Please retry.');
+
+  try {
+    rows.forEach(function(item) {
+      const store = String(item && item.store || '').trim();
+      if (!store) return;
+
+      const date = normalizeDateText_(item.deliveryDate || item.date || '');
+      const d = parseTargetDate_(date);
+      const week = isoWeekLabel_(d);
+      weeks[week] = true;
+
+      const values = emptyRow_(headers.length);
+      put_(values, map, 'Week', week);
+      put_(values, map, 'Delivery Date', date);
+      put_(values, map, 'Store', store);
+      put_(values, map, 'Mingles Target', safeNumberText_(item.mingles));
+      put_(values, map, 'RTE Target', safeNumberText_(item.rte));
+      put_(values, map, 'Updated At', new Date());
+      put_(values, map, 'Source File', sourceFile);
+
+      const key = date + '|' + store.toLowerCase();
+      const rowNo = existing[key];
+      if (rowNo) {
+        sheet.getRange(rowNo, 1, 1, headers.length).setValues([values]);
+        updated++;
+      } else {
+        sheet.appendRow(values);
+        existing[key] = sheet.getLastRow();
+        inserted++;
+      }
+    });
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+
+  return {
+    ok: true,
+    inserted: inserted,
+    updated: updated,
+    total: inserted + updated,
+    weeks: Object.keys(weeks).sort(),
+    sheet: TK.TARGET_SHEET_NAME
+  };
 }
 
 function setupStoreRefillTargets() {
-  const ss = getSpreadsheet_();
-  let sheet = ss.getSheetByName(TK.TARGET_SHEET_NAME);
-  if (sheet) {
-    Logger.log('Target sheet already exists: ' + TK.TARGET_SHEET_NAME);
-    return;
-  }
-
-  sheet = ss.insertSheet(TK.TARGET_SHEET_NAME);
-  const stores = [
-    ["Acacia", '', ''],
-    ["Agdao", '', ''],
-    ["Anda", '', ''],
-    ["Asano GSIS", '', ''],
-    ["Bajada", '', ''],
-    ["Bangkal 1", '', ''],
-    ["Bangkal 3", '', ''],
-    ["Bucana", '', ''],
-    ["Buhangin KM5", '', ''],
-    ["Buhangin KM6", '', ''],
-    ["Cabaguio", '', ''],
-    ["Cabantian 1", '', ''],
-    ["Cabantian 2", '', ''],
-    ["Carpenter", '', ''],
-    ["Central Park", '', ''],
-    ["Centrale", '', ''],
-    ["Claveria", '', ''],
-    ["Communal", '', ''],
-    ["Damosa 2", '', ''],
-    ["Damosa-1", '', ''],
-    ["DCCS Washington", '', ''],
-    ["DMC", '', ''],
-    ["Doverlane", '', ''],
-    ["Dumnalas", '', ''],
-    ["Ecoland", '', ''],
-    ["El Rio", '', ''],
-    ["Fatima", '', ''],
-    ["Flyover", '', ''],
-    ["Garcia Heights", '', ''],
-    ["GSIS", '', ''],
-    ["Guerrero 1", '', ''],
-    ["Indangan Malagamot", '', ''],
-    ["J4", '', ''],
-    ["J5", '', ''],
-    ["Kumon Obrero", '', ''],
-    ["Lanang", '', ''],
-    ["Maa 1 - Gem", '', ''],
-    ["Maa 2", '', ''],
-    ["Mabini", '', ''],
-    ["Madapo", '', ''],
-    ["Malvar", '', ''],
-    ["Marfori", '', ''],
-    ["Matina Crossing", '', ''],
-    ["MDRMC", '', ''],
-    ["MTS", '', ''],
-    ["N. Torres", '', ''],
-    ["NHA Buhangin", '', ''],
-    ["Obrero 1", '', ''],
-    ["Panorama", '', ''],
-    ["Ponce", '', ''],
-    ["Quimpo", '', ''],
-    ["Rizal", '', ''],
-    ["Roxas", '', ''],
-    ["San Antonio Agdao", '', ''],
-    ["Sandawa", '', ''],
-    ["Sasa", '', ''],
-    ["St. Mary Buhangin", '', ''],
-    ["Sta.Ana", '', ''],
-    ["UM Matina", '', '']
-  ];
-  sheet.getRange(1, 1, 1, 3).setValues([['Store', 'Mingles Target', 'RTE Target']]);
-  if (stores.length) sheet.getRange(2, 1, stores.length, 3).setValues(stores);
-  sheet.setFrozenRows(1);
-  sheet.autoResizeColumns(1, 3);
-  Logger.log('Created ' + TK.TARGET_SHEET_NAME + ' with ' + stores.length + ' stores.');
+  const info = ensureTargetSheet_();
+  info.sheet.autoResizeColumns(1, TK_TARGET_HEADERS.length);
+  Logger.log('Weekly refill target sheet ready: ' + TK.TARGET_SHEET_NAME);
 }
 
 /* -------------------- HELPERS -------------------- */

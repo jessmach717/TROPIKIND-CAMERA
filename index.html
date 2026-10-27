@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TropiKind Field Camera</title>
+<title>TropiKind Field Camera v36</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TropiKind">
@@ -222,6 +222,22 @@
   .target-suggest strong{color:#8ef0b0;font-size:22px}
   .target-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.4}
 
+
+  .monitor-banner{
+    margin:0 0 14px;padding:15px 16px;border-radius:16px;
+    background:linear-gradient(145deg,#0e2545,#081525);
+    border:1px solid rgba(224,177,58,.34);box-shadow:0 10px 24px rgba(0,0,0,.24)
+  }
+  .monitor-kicker{font-size:10px;color:var(--gold-soft);font-weight:900;letter-spacing:.22em}
+  .monitor-title{font-size:23px;font-weight:900;letter-spacing:.03em;margin-top:2px;color:#fff}
+  .monitor-sub{font-size:11px;color:var(--muted);margin-top:3px}
+  .visit-code-line{padding:10px 12px;border-radius:10px;background:#081525;border:1px solid rgba(255,255,255,.1);font-size:12px;color:var(--muted)}
+  .visit-code-line strong{color:var(--gold-soft);font-size:15px;letter-spacing:.08em}
+  .admin-toggle{width:100%;margin-top:14px}
+  #adminTools{margin-top:10px}
+  #photoStep .field{margin-bottom:12px}
+  #detailsStep .remarks-box{margin-top:12px}
+
 </style>
 </head>
 <body>
@@ -236,64 +252,95 @@
     <button id="installBtn" class="install-btn hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>Install</button>
   </header>
 
-  <!-- STEP 1 -->
-  <section class="step-card">
+  <div class="monitor-banner">
+    <div class="monitor-kicker">TROPIKIND</div>
+    <div class="monitor-title">Delivery Monitoring</div>
+    <div class="monitor-sub">Simple field flow: photo → details → save</div>
+  </div>
+
+  <!-- 1. PHOTO FIRST -->
+  <section class="step-card" id="photoStep">
     <div class="step-head">
       <div class="step-no">1</div>
-      <div class="step-copy"><h2 class="step-title">Visit &amp; Store</h2><p class="step-sub">Set the store, staff, date and visit stage.</p></div>
+      <div class="step-copy"><h2 class="step-title">Take Photo</h2><p class="step-sub">Choose BEFORE or AFTER, then take the store display photo.</p></div>
     </div>
 
-    <div class="subgroup">
-      <div class="subgroup-title">Store information</div>
-      <div class="field">
-        <label for="branch">Store branch</label>
-        <div class="inline"><select id="branch"></select><button class="ghost" id="addBranch">+ Add</button></div>
-      </div>
-      <div class="field">
-        <label for="staff">Delivery staff</label>
-        <div class="inline"><select id="staff"></select><button class="ghost" id="addStaff">+ Add</button></div>
+    <div class="field">
+      <label>Visit stage</label>
+      <div class="seg" id="seg">
+        <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
+        <button data-v="AFTER" aria-pressed="true">AFTER</button>
       </div>
     </div>
 
-    <div class="subgroup">
-      <div class="subgroup-title">Visit schedule</div>
-      <div class="field">
-        <label for="when">Date &amp; time</label>
-        <div class="inline"><input type="datetime-local" id="when"><button class="ghost" id="btnNow">Now</button></div>
-        <div class="week-chip"><span>Week number</span><strong id="weekNo">—</strong></div>
-      </div>
-      <div class="field">
-        <label>Visit stage</label>
-        <div class="seg" id="seg">
-          <button data-v="BEFORE" aria-pressed="false">BEFORE</button>
-          <button data-v="AFTER" aria-pressed="true">AFTER</button>
+    <div class="capture-shell">
+      <div class="stage" id="stage">
+        <canvas id="preview"></canvas>
+        <div class="empty" id="empty">
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <b>No photo yet</b><span>Take or upload the store display photo.</span>
         </div>
+      </div>
+      <div class="row">
+        <button id="btnCam" class="gold icon-btn">Take photo</button>
+        <button id="btnUpload" class="icon-btn">Upload</button>
+        <button id="btnRetake" class="ghost hidden">Retake</button>
+      </div>
+      <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="file" accept="image/*" class="hidden">
+
+      <div class="photo-stage-status">
+        <div class="photo-stage-chip" id="beforePhotoStatus"><b>BEFORE PHOTO</b><span>Not taken</span></div>
+        <div class="photo-stage-chip" id="afterPhotoStatus"><b>AFTER PHOTO</b><span>Not taken</span></div>
       </div>
     </div>
   </section>
 
-  <!-- STEP 2 -->
+  <!-- 2. VISIT DETAILS -->
   <section class="step-card">
     <div class="step-head">
       <div class="step-no">2</div>
-      <div class="step-copy"><h2 class="step-title">Inventory &amp; Remarks</h2><p class="step-sub">BEFORE uses Beginning Inventory. AFTER uses Refill and BO.</p></div>
+      <div class="step-copy"><h2 class="step-title">Visit Details</h2><p class="step-sub">Store, delivery staff and visit date.</p></div>
     </div>
 
-    <div class="subgroup">
-      <div class="subgroup-title">Products</div>
-      <div class="field">
-        <label>Product on display</label>
-        <div class="seg multi" id="prod">
-          <button data-v="Mingles" aria-pressed="true">Mingles</button>
-          <button data-v="Singles" aria-pressed="true">Singles</button>
-          <button data-v="RTE" aria-pressed="true">RTE</button>
-        </div>
+    <div class="field">
+      <label for="branch">Store branch</label>
+      <div class="inline"><select id="branch"></select><button class="ghost" id="addBranch">+ Add</button></div>
+    </div>
+    <div class="field">
+      <label for="staff">Delivery staff</label>
+      <div class="inline"><select id="staff"></select><button class="ghost" id="addStaff">+ Add</button></div>
+    </div>
+    <div class="field">
+      <label for="when">Date &amp; time</label>
+      <div class="inline"><input type="datetime-local" id="when"><button class="ghost" id="btnNow">Now</button></div>
+      <div class="week-chip"><span>Week number</span><strong id="weekNo">—</strong></div>
+    </div>
+    <div class="visit-code-line">Visit Code: <strong id="visitCodeLabel"></strong></div>
+  </section>
+
+  <!-- 3. STAGE DETAILS -->
+  <section class="step-card" id="detailsStep">
+    <div class="step-head">
+      <div class="step-no">3</div>
+      <div class="step-copy">
+        <h2 class="step-title" id="detailsTitle">BEFORE Details</h2>
+        <p class="step-sub" id="detailsSub">Beginning Inventory, weekly target and remarks.</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Product on display</label>
+      <div class="seg multi" id="prod">
+        <button data-v="Mingles" aria-pressed="true">Mingles</button>
+        <button data-v="Singles" aria-pressed="true">Singles</button>
+        <button data-v="RTE" aria-pressed="true">RTE</button>
       </div>
     </div>
 
     <div class="subgroup" id="beginningInventoryField">
       <div class="subgroup-title">Beginning Inventory — BEFORE</div>
-      <label>Enter existing stock before refill</label>
+      <label>Existing stock before refill</label>
       <div class="sku-row">
         <div class="nm">Mingles</div>
         <div class="cell"><small>Packs</small><input id="biMingles" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
@@ -309,7 +356,7 @@
     </div>
 
     <div class="target-box" id="targetRefillBox">
-      <div class="target-title">Store Target Refill</div>
+      <div class="target-title">Weekly Refill Target</div>
       <div class="target-grid">
         <div class="target-card">
           <b>Mingles</b>
@@ -322,18 +369,18 @@
           <div class="target-line target-suggest"><span>Suggested refill</span><strong id="suggestRTE">—</strong></div>
         </div>
       </div>
-      <div class="target-note" id="targetRefillNote">Targets are maintained in Google Sheet → Store Refill Targets.</div>
+      <div class="target-note" id="targetRefillNote">Select the visit date to load the matching weekly set.</div>
     </div>
 
-    <div class="subgroup">
-      <div class="subgroup-title">Refill &amp; BO — AFTER</div>
+    <div class="subgroup" id="afterCountsGroup">
+      <div class="subgroup-title">Actual Refill &amp; BO — AFTER</div>
       <div class="field" id="skuCountsField">
-        <label>Refill &amp; BO — per product</label>
+        <label>Enter actual refill and Bad Order (BO)</label>
         <div id="skuCounts"></div>
       </div>
     </div>
 
-    <div class="subgroup remarks-box">
+<div class="subgroup remarks-box" id="remarksField">
       <div class="subgroup-title">Remarks — select all that apply</div>
       <div class="field">
         <label for="remarkSelect">Multiple remarks</label>
@@ -374,98 +421,84 @@
     <textarea id="remarks" class="hidden"></textarea>
   </section>
 
-  <!-- STEP 3 -->
-  <section class="step-card">
-    <div class="step-head">
-      <div class="step-no">3</div>
-      <div class="step-copy"><h2 class="step-title">Display Photo</h2><p class="step-sub">Take or upload the store display photo.</p></div>
-    </div>
-    <div class="capture-shell">
-      <div class="stage" id="stage">
-        <canvas id="preview"></canvas>
-        <div class="empty" id="empty">
-          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <b>No photo yet</b><span>Take or upload the display photo.</span>
-        </div>
-      </div>
-      <div class="row">
-        <button id="btnCam" class="gold icon-btn">Take photo</button>
-        <button id="btnUpload" class="icon-btn">Upload</button>
-        <button id="btnRetake" class="ghost hidden">Retake</button>
-      </div>
-      <input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
-      <input type="file" id="file" accept="image/*" class="hidden">
-      <div class="photo-stage-status">
-        <div class="photo-stage-chip" id="beforePhotoStatus"><b>BEFORE PHOTO</b><span>Not taken</span></div>
-        <div class="photo-stage-chip" id="afterPhotoStatus"><b>AFTER PHOTO</b><span>Not taken</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- STEP 4 -->
+  <!-- 4. RECEIPT - AFTER ONLY -->
   <section class="step-card" id="receiptPanel">
     <div class="step-head">
       <div class="step-no">4</div>
-      <div class="step-copy"><h2 class="step-title">DR / BO Receipt</h2><p class="step-sub">Optional receipt photo paired using the same Visit Code.</p></div>
+      <div class="step-copy"><h2 class="step-title">Receipt / DR / BO</h2><p class="step-sub">AFTER only. Take the receipt photo when available.</p></div>
     </div>
     <div class="subgroup">
-      <div class="recrow"><strong>Visit code: <span id="visitCodeLabel"></span></strong><button id="newVisit" class="ghost">New visit</button></div>
       <label>DR/BO receipt photo (optional)</label>
-      <p class="save-note">Take a photo of the actual paper receipt. Keep all four corners visible and avoid glare. Both images use the same code.</p>
+      <p class="save-note">Keep the full paper visible. It is paired using the same Visit Code.</p>
       <div class="row"><button id="receiptTake" class="gold">Take receipt photo</button><button id="receiptUpload" class="ghost">Upload receipt</button></div>
       <input id="receiptCam" type="file" accept="image/*" capture="environment" class="hidden">
       <input id="receiptFile" type="file" accept="image/*" class="hidden">
       <canvas id="receiptPreview" style="display:none;width:100%;height:auto;margin-top:14px;border-radius:10px"></canvas>
       <div class="row"><button id="receiptSave" class="gold" disabled>Save receipt</button><button id="receiptDownload" class="ghost" disabled>Download receipt</button></div>
       <div class="row"><button id="receiptRetake" class="ghost" disabled>Retake receipt</button><button id="receiptRemove" class="ghost" disabled>Remove receipt</button></div>
-      <p class="save-note">Receipt saves separately at its original dimensions. Save both images before starting a new visit.</p>
     </div>
   </section>
 
-  <!-- STEP 5 -->
+  <!-- 5. SAVE -->
   <section class="step-card">
     <div class="step-head">
       <div class="step-no">5</div>
-      <div class="step-copy"><h2 class="step-title">Save &amp; Sync</h2><p class="step-sub">Save the visit and allow the existing Google Sheet and Drive sync to continue.</p></div>
+      <div class="step-copy"><h2 class="step-title">Save &amp; Sync</h2><p class="step-sub">Save the visit. Google Sheet and Drive sync run in the background.</p></div>
     </div>
 
     <div class="save-shell">
-      <div class="row"><button id="btnSave" class="gold" disabled>Save photos</button></div>
-      <div class="row"><button id="btnDownload" class="ghost" disabled>Download photos</button></div>
-      <button class="linkbtn" id="btnGallery">Save to Gallery manually (long-press image)</button>
-      <div class="save-note" id="saveNote">Add a photo first — the stamp is baked into the saved image.</div>
+      <div class="row"><button id="btnSave" class="gold" disabled>Save visit photo</button></div>
+      <div class="row"><button id="btnDownload" class="ghost" disabled>Download photo</button></div>
+      <button class="linkbtn" id="btnGallery">Save to Gallery manually</button>
+      <div class="save-note" id="saveNote">Add a photo first.</div>
     </div>
 
     <div class="subgroup">
-      <div class="subgroup-title">Google Drive photo upload</div>
       <div id="mediaStatus" class="sync-status off">Checking photo queue…</div>
       <button id="mediaRetry" class="ghost">Upload / retry photos</button>
-      <p class="save-note">Saving photos also queues both for the Tropikind Files Drive folder. Upload uses your existing sync URL and token. Offline uploads retry when you reconnect.</p>
     </div>
 
-    <div class="subgroup recpanel">
-      <div class="recrow">
-        <span id="recCount">0 records saved</span>
-        <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
+    <button class="admin-toggle ghost" id="adminToggle">Admin / Sync Tools</button>
+    <div id="adminTools" class="hidden">
+
+      <div class="subgroup" id="weeklySetAdmin">
+        <div class="subgroup-title">Weekly Refill Set — Admin Upload</div>
+        <p class="save-note">One CSV may contain all stores and multiple delivery dates within the week.</p>
+        <div class="field">
+          <label for="targetCsv">Weekly set CSV</label>
+          <input type="file" id="targetCsv" accept=".csv,text/csv">
+        </div>
+        <button class="ghost" id="importTargetSet">Upload / Update Weekly Set</button>
+        <div id="targetImportStatus" class="sync-status off" style="margin-top:9px">CSV columns: Delivery Date, Store, Mingles Target, RTE Target</div>
       </div>
-      <div class="sync-status off" id="syncStatus">Cloud sync off — add your Google Sheet link</div>
-      <div class="sync-cfg hidden" id="syncCfg">
-        <label>Google Sheet Web App URL</label>
-        <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec">
-        <label>Secret token (must match the script)</label>
-        <input type="text" id="syncTokIn" autocomplete="off" placeholder="e.g. tropikind2026">
-        <p class="hint">Paste the Web App URL you get after deploying the Apps Script to your sheet. The token is optional but recommended.</p>
-        <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
-      </div>
-      <div class="row">
-        <button id="btnSyncNow" class="ghost">Sync now</button>
-        <button id="btnExport" class="ghost">Export CSV</button>
-        <button id="btnClear" class="ghost danger">Clear</button>
+
+      <div class="subgroup recpanel">
+        <div class="recrow">
+          <span id="recCount">0 records saved</span>
+          <button class="linkbtn" id="btnSyncCfg">Sync settings</button>
+        </div>
+        <div class="sync-status off" id="syncStatus">Cloud sync off — Apps Script /exec URL missing</div>
+        <div class="sync-cfg hidden" id="syncCfg">
+          <label>Apps Script Web App /exec URL</label>
+          <input type="url" id="syncUrlIn" inputmode="url" autocomplete="off" value="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec">
+          <label>Secret token</label>
+          <input type="text" id="syncTokIn" autocomplete="off" value="tropikind2026">
+          <p class="hint"><b>Google Sheet:</b> <a href="https://docs.google.com/spreadsheets/d/1eMwadrMAWwNtzaE4fBsGG2gSdvUNc8zI1F0QJFP1KuE/edit" target="_blank" rel="noopener">Open Tropikind Sheet</a><br>
+          <b>Token:</b> tropikind2026</p>
+          <button class="ghost" id="saveSyncCfg" style="margin-top:10px">Save sync settings</button>
+        </div>
+        <div class="row">
+          <button id="btnSyncNow" class="ghost">Sync now</button>
+          <button id="btnExport" class="ghost">Export CSV</button>
+          <button id="btnClear" class="ghost danger">Clear</button>
+        </div>
       </div>
     </div>
+
+    <div class="row"><button id="newVisit" class="ghost">Start New Visit</button></div>
   </section>
 
-  <div class="foot">TROPIKIND® · One of a kind · Field documentation</div>
+  <div class="foot">TROPIKIND® · Delivery Monitoring · Field documentation</div>
 </div>
 
 <div class="img-overlay" id="imgOverlay">
@@ -547,10 +580,18 @@
   };
 
   var refillTargets={};
+  var refillTargetMeta={week:"",date:""};
   function targetKey(s){return String(s||"").trim().toLowerCase();}
   function inventoryNumber(id){
     var el=$(id), n=Number(el&&el.value);
     return isFinite(n)&&n>=0?n:0;
+  }
+  function selectedVisitDate(){
+    var v=$("when").value;
+    if(!v)return "";
+    var d=new Date(v);
+    if(isNaN(d.getTime()))return "";
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
   }
   function renderRefillTargets(){
     var t=refillTargets[targetKey(state.branch)]||null;
@@ -558,7 +599,10 @@
     if(!tm||!tr||!sm||!sr)return;
     if(!t){
       tm.textContent=tr.textContent=sm.textContent=sr.textContent="—";
-      if(note)note.textContent='No target set. Encode it in Google Sheet → Store Refill Targets.';
+      if(note){
+        var meta=(refillTargetMeta.week?refillTargetMeta.week+" · ":"")+(refillTargetMeta.date||selectedVisitDate()||"");
+        note.textContent=(meta?meta+" — ":"")+"No target found for "+(state.branch||"this store")+".";
+      }
       return;
     }
     var mv=(t.mingles===""||t.mingles==null)?null:Number(t.mingles);
@@ -567,24 +611,93 @@
     tr.textContent=(rv!=null&&isFinite(rv))?String(rv):"—";
     sm.textContent=(mv!=null&&isFinite(mv))?String(Math.max(0,mv-inventoryNumber("biMingles"))):"—";
     sr.textContent=(rv!=null&&isFinite(rv))?String(Math.max(0,rv-inventoryNumber("biRTE"))):"—";
-    if(note)note.textContent='Suggested Refill = Target Stock − Beginning Inventory.';
+    if(note){
+      var label=(t.week||refillTargetMeta.week||"")+" · "+(t.deliveryDate||refillTargetMeta.date||selectedVisitDate());
+      note.textContent=label+" — Suggested Refill = Target Stock − Beginning Inventory.";
+    }
   }
   function loadRefillTargets(){
     var url=(typeof syncURL==="function")?syncURL():"";
-    if(!url||!navigator.onLine){renderRefillTargets();return;}
+    var date=selectedVisitDate();
+    refillTargets={}; refillTargetMeta={week:"",date:date};
+    if(!url||!navigator.onLine||!date){renderRefillTargets();return;}
     var join=url.indexOf("?")>=0?"&":"?";
-    fetch(url+join+"action=targets&token="+encodeURIComponent(syncTok()),{method:"GET",cache:"no-store"})
+    fetch(url+join+"action=targets&token="+encodeURIComponent(syncTok())+"&date="+encodeURIComponent(date),{method:"GET",cache:"no-store"})
       .then(function(res){return res.json();})
       .then(function(data){
-        if(!data||!data.ok||!Array.isArray(data.targets))return;
+        if(!data||!data.ok||!Array.isArray(data.targets))throw new Error((data&&data.error)||"Target lookup failed");
         refillTargets={};
+        refillTargetMeta={week:data.week||"",date:data.date||date};
         data.targets.forEach(function(x){
-          if(x&&x.store)refillTargets[targetKey(x.store)]={mingles:x.mingles,rte:x.rte};
+          if(x&&x.store)refillTargets[targetKey(x.store)]={mingles:x.mingles,rte:x.rte,week:x.week||data.week||"",deliveryDate:x.deliveryDate||date};
         });
         renderRefillTargets();
       })
       .catch(function(){renderRefillTargets();});
   }
+
+  function parseCsvRows(text){
+    var rows=[], row=[], field="", quoted=false;
+    for(var i=0;i<text.length;i++){
+      var ch=text[i], nx=text[i+1];
+      if(quoted){
+        if(ch==='"' && nx==='"'){field+='"';i++;}
+        else if(ch==='"'){quoted=false;}
+        else field+=ch;
+      }else{
+        if(ch==='"')quoted=true;
+        else if(ch===','){row.push(field);field="";}
+        else if(ch==='\n'){row.push(field);rows.push(row);row=[];field="";}
+        else if(ch!=='\r')field+=ch;
+      }
+    }
+    if(field!==""||row.length){row.push(field);rows.push(row);}
+    return rows.filter(function(r){return r.some(function(v){return String(v||"").trim()!=="";});});
+  }
+  function normalizeCsvHeader(s){return String(s||"").trim().toLowerCase().replace(/[\s_-]+/g," ");}
+
+  $("importTargetSet").addEventListener("click",function(){
+    var file=$("targetCsv").files&&$("targetCsv").files[0];
+    var status=$("targetImportStatus");
+    if(!file){status.textContent="Choose a CSV file first.";status.className="sync-status err";return;}
+    if(!syncURL()){status.textContent="Missing Apps Script /exec URL.";status.className="sync-status err";return;}
+    var reader=new FileReader();
+    reader.onload=function(){
+      try{
+        var raw=parseCsvRows(String(reader.result||""));
+        if(raw.length<2)throw new Error("CSV has no data rows.");
+        var hdr=raw[0].map(normalizeCsvHeader);
+        function idx(){
+          for(var a=0;a<arguments.length;a++){var k=hdr.indexOf(arguments[a]);if(k>=0)return k;}
+          return -1;
+        }
+        var dateI=idx("delivery date","date");
+        var storeI=idx("store","outlet","branch");
+        var mI=idx("mingles target","mingles");
+        var rI=idx("rte target","rte");
+        if(dateI<0||storeI<0||mI<0||rI<0)throw new Error("Required columns: Delivery Date, Store, Mingles Target, RTE Target.");
+        var rows=raw.slice(1).map(function(r){
+          return {deliveryDate:String(r[dateI]||"").trim(),store:String(r[storeI]||"").trim(),
+            mingles:String(r[mI]||"").trim(),rte:String(r[rI]||"").trim()};
+        }).filter(function(r){return r.deliveryDate&&r.store;});
+        if(!rows.length)throw new Error("No valid target rows found.");
+        status.textContent="Uploading "+rows.length+" target rows…";status.className="sync-status wait";
+        fetch(syncURL(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body:JSON.stringify({action:"importTargetSet",token:syncTok(),sourceFile:file.name,rows:rows})})
+          .then(function(res){return res.json();})
+          .then(function(data){
+            if(!data||!data.ok)throw new Error((data&&data.error)||"Import failed");
+            status.textContent="Weekly set saved ✓ "+data.inserted+" added, "+data.updated+" updated. "+(data.weeks||[]).join(", ");
+            status.className="sync-status ok";
+            loadRefillTargets();
+          })
+          .catch(function(err){status.textContent="Upload failed — "+err.message;status.className="sync-status err";});
+      }catch(err){
+        status.textContent="CSV error — "+err.message;status.className="sync-status err";
+      }
+    };
+    reader.readAsText(file);
+  });
 
 
   // Image pairing is separate from the record and Google Sheet payload.
@@ -694,8 +807,17 @@
       b.setAttribute("aria-pressed", b.dataset.v===v ? "true":"false");
     });
 
-    // BEFORE = Beginning Inventory only. Refill / BO is not allowed.
+    // Operator flow: BEFORE = Beginning Inventory + Target + Remarks.
+    // AFTER = Actual Refill + BO + Receipt; no remarks.
     $("beginningInventoryField").style.display=(v==="BEFORE")?"":"none";
+    if($("targetRefillBox")) $("targetRefillBox").style.display=(v==="BEFORE")?"":"none";
+    if($("remarksField")) $("remarksField").style.display=(v==="BEFORE")?"":"none";
+    if($("afterCountsGroup")) $("afterCountsGroup").style.display=(v==="AFTER")?"":"none";
+    if($("receiptPanel")) $("receiptPanel").style.display=(v==="AFTER")?"":"none";
+    if($("detailsTitle")) $("detailsTitle").textContent=(v==="BEFORE"?"BEFORE Details":"AFTER Details");
+    if($("detailsSub")) $("detailsSub").textContent=(v==="BEFORE"
+      ?"Beginning Inventory, weekly target and remarks."
+      :"Actual refill and Bad Order (BO). Remarks stay with BEFORE.");
 
     if(v==="BEFORE" && typeof counts==="object" && counts){
       ["Mingles","Singles","RTE"].forEach(function(s){
@@ -774,9 +896,13 @@
   }
   function setNow(){ $("when").value=toLocalInput(new Date()); updateWeek(); draw(); }
   $("btnNow").addEventListener("click", setNow);
-  $("when").addEventListener("change", function(){updateWeek();draw();});
+  $("when").addEventListener("change", function(){updateWeek();loadRefillTargets();draw();});
   setNow();
   $("beginningInventoryField").style.display=(state.stage==="BEFORE")?"":"none";
+  if($("targetRefillBox")) $("targetRefillBox").style.display=(state.stage==="BEFORE")?"":"none";
+  if($("remarksField")) $("remarksField").style.display=(state.stage==="BEFORE")?"":"none";
+  if($("afterCountsGroup")) $("afterCountsGroup").style.display=(state.stage==="AFTER")?"":"none";
+  if($("receiptPanel")) $("receiptPanel").style.display=(state.stage==="AFTER")?"":"none";
   composeRemarks();
 
     function inventoryVal(id){
@@ -785,6 +911,12 @@
   }
 
   function composeRemarks(){
+    // Remarks belong to BEFORE only. AFTER records intentionally carry no remarks.
+    if(state.stage!=="BEFORE"){
+      $("remarks").value="";
+      draw();
+      return;
+    }
     var parts=[];
     var selected=Array.prototype.map.call(
       document.querySelectorAll('input[name="remarkOption"]:checked'),
@@ -794,14 +926,11 @@
 
     selected.forEach(function(v){ parts.push(v); });
     if(other) parts.push(other);
-
-    if(state.stage==="BEFORE"){
-      parts.push(
-        "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
-        "; Singles "+inventoryVal("biSingles")+
-        "; RTE "+inventoryVal("biRTE")
-      );
-    }
+    parts.push(
+      "Beginning Inventory: Mingles "+inventoryVal("biMingles")+
+      "; Singles "+inventoryVal("biSingles")+
+      "; RTE "+inventoryVal("biRTE")
+    );
 
     $("remarks").value=parts.join(" | ");
     draw();
@@ -983,11 +1112,12 @@
 
     text('TROPIKIND',H*.055,34,'#f2d27a',800);
     text('DELIVERY MONITORING',H*.093,15);
-    text(state.branch||'—',H*.155,28,'#ffffff',800);
-    text(state.stage,H*.225,38,after?'#5be08a':'#ffab2e',800);
-    text(dt.date,H*.28,22);text(dt.time,H*.317,22);
+    text(state.branch||'—',H*.145,28,'#ffffff',800);
+    text(state.stage,H*.205,38,after?'#5be08a':'#ffab2e',800);
+    text(dt.date,H*.255,22);text(dt.time,H*.292,22);
     var wd=$("when").value?new Date($("when").value):new Date(); if(isNaN(wd.getTime()))wd=new Date();
-    text('WEEK '+isoWeek(wd),H*.348,18,'#f2d27a',800);
+    text('WEEK '+isoWeek(wd),H*.326,18,'#f2d27a',800);
+    text('PHOTO '+W+' × '+H+' px',H*.355,14,'#9fb2c9',700);
 
     if(after){
       var active=ORDER.filter(function(s){return prodSel.indexOf(s)>=0;});
@@ -1017,10 +1147,18 @@
         metric('BO',c.bo,y+block*.69,'#ffab6b');
       });
 
-      if(comments) drawCommentsBox(H*.67,H*.855);
+      // AFTER intentionally has no remarks panel.
     }else{
-      // BEFORE: use the large middle area for readable visit comments.
-      if(comments) drawCommentsBox(H*.37,H*.855);
+      // BEFORE: show weekly target and suggested refill, then beginning inventory / remarks.
+      var tm=$('targetMingles') ? $('targetMingles').textContent : '—';
+      var tr=$('targetRTE') ? $('targetRTE').textContent : '—';
+      var sm=$('suggestMingles') ? $('suggestMingles').textContent : '—';
+      var sr=$('suggestRTE') ? $('suggestRTE').textContent : '—';
+      ctx.fillStyle='rgba(3,16,31,.48)'; rr(ctx,x,H*.385,innerW,H*.115,10*unit); ctx.fill();
+      text('WEEKLY REFILL TARGET',H*.405,17,'#f2d27a',800);
+      text('Mingles  Target '+tm+'  ·  Suggested '+sm,H*.445,17,'#ffffff',700);
+      text('RTE      Target '+tr+'  ·  Suggested '+sr,H*.477,17,'#ffffff',700);
+      if(comments) drawCommentsBox(H*.52,H*.855);
     }
 
     text('Staff: '+(state.staff||'—'),H*.895,24);
@@ -1146,6 +1284,7 @@
     LS.set("tk_sync_token_revision","paired-photos-v2-15");
   }
   var DEPLOYED_SYNC_URL="https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec";
+  var DEPLOYED_SHEET_URL="https://docs.google.com/spreadsheets/d/1eMwadrMAWwNtzaE4fBsGG2gSdvUNc8zI1F0QJFP1KuE/edit";
   // Apply this deployment once, including devices that remember an older URL.
   // Subsequent manual sync-setting changes remain editable.
   if(LS.get("tk_sync_deployment","")!==DEPLOYED_SYNC_URL){
@@ -1168,7 +1307,7 @@
   }
   function setSyncStatus(txt, cls){ var el=$("syncStatus"); if(el){ el.textContent=txt; el.className="sync-status "+cls; } }
   function updateSyncStatus(){
-    if(!syncURL()){ setSyncStatus("Cloud sync off — add your Google Sheet link","off"); return; }
+    if(!syncURL()){ setSyncStatus("Cloud sync off — Apps Script /exec URL missing","off"); return; }
     var log=getLog(), pend=log.filter(function(r){return !r.synced;}).length;
     if(pend===0){ setSyncStatus((log.length?("All "+log.length+" synced to Google Sheet \u2713"):"Connected \u2014 no records yet"),"ok"); }
     else { setSyncStatus(pend+" record"+(pend===1?"":"s")+" waiting"+(navigator.onLine?"":" (offline)"),"wait"); }
@@ -1176,7 +1315,7 @@
   var syncing=false;
   function syncNow(manual){
     var url=syncURL();
-    if(!url){ if(manual) toast("Add your Google Sheet link in Sync settings first"); updateSyncStatus(); return; }
+    if(!url){ if(manual) toast("Apps Script /exec URL is missing in Sync settings"); updateSyncStatus(); return; }
     if(syncing) return;
     var pend=pendingRecords();
     if(!pend.length){ if(manual) toast("Nothing to sync \u2014 all up to date"); updateSyncStatus(); return; }
@@ -1392,6 +1531,16 @@
     });
   }
   window.addEventListener('appinstalled', function(){ if(btn) btn.classList.add('hidden'); });
+
+  var adminToggle=$("adminToggle"), adminTools=$("adminTools");
+  if(adminToggle && adminTools){
+    adminToggle.addEventListener("click",function(){
+      var open=adminTools.classList.contains("hidden");
+      adminTools.classList.toggle("hidden",!open);
+      adminToggle.textContent=open?"Hide Admin / Sync Tools":"Admin / Sync Tools";
+    });
+  }
+
 })();
 </script>
 </body>

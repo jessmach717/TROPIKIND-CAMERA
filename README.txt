@@ -1,28 +1,65 @@
-TROPIKIND FINAL v31
+TROPIKIND FIELD CAMERA v36
+==========================
 
-WHAT IS FINALIZED
-- All selected checkbox remarks are combined into ONE "Remarks" cell using " | " separators.
-- Remark Category also recognizes all 24 approved standard remarks.
-- Free-text stays in Other Remarks and is also included in the combined Remarks cell.
-- Beginning Inventory remains parsed separately for Mingles, Singles and RTE.
-- BEFORE and AFTER photos remain separate in the phone app.
-- Backend writes Photo Link for compatibility plus dedicated Before Photo Link and After Photo Link.
-- Receipt writes both Receipt Link and Receipt Photo Link.
-- Drive hierarchy: date / store / PHOTO / BEFORE or AFTER; receipt in RECEIPT.
-- Drive Folder Link and Visit Code remain active.
-- Existing Google Sheet /exec URL and token are preserved.
-- Store refill targets supported through tab: Store Refill Targets
-  Columns: Store | Mingles Target | RTE Target
-- setupStoreRefillTargets() may be run ONCE to create that tab if absent.
-- Suggested Refill shown in app = Target Stock - Beginning Inventory, minimum zero.
-- doPost() should NOT be manually Run from Apps Script editor.
+PURPOSE
+This revision restores the simpler, operator-friendly flow inspired by the earlier v20/v25 camera versions, while keeping the v33-v35 backend functions.
+
+VISIBLE FIELD FLOW
+1. TAKE PHOTO
+   - BEFORE / AFTER selector is immediately visible.
+   - Take Photo is the first main action after the Tropikind header.
+   - Separate BEFORE and AFTER photo status is retained.
+
+2. VISIT DETAILS
+   - Store
+   - Delivery staff
+   - Date & time
+   - Automatic Week Number
+   - Visit Code
+
+3. STAGE DETAILS
+   BEFORE:
+   - Beginning Inventory: Mingles, Singles, RTE
+   - Weekly Refill Target
+   - Suggested Refill
+   - Multiple Remarks + Other Remarks
+
+   AFTER:
+   - Actual Refill
+   - Bad Order (BO)
+   - NO remarks
+
+4. RECEIPT / DR / BO
+   - Shown only in AFTER.
+   - Paired to the same Visit Code.
+
+5. SAVE & SYNC
+   - Normal user sees simple Save/Sync controls.
+   - Weekly CSV upload and Sync Settings are placed under a collapsed Admin / Sync Tools section.
+
+PRESERVED CONNECTION
+Apps Script /exec:
+https://script.google.com/macros/s/AKfycby3c6AtWV1YIO0CjKaRbj7mQQcB9mnxK-XLjZcnP1_Qr2vRNsRHbcy9U67kSoz91CetUQ/exec
+
+Token:
+tropikind2026
+
+Google Sheet:
+https://docs.google.com/spreadsheets/d/1eMwadrMAWwNtzaE4fBsGG2gSdvUNc8zI1F0QJFP1KuE/edit
+
+BACKEND
+Tropikind_Delivery_Final.gs remains the current weekly-set backend:
+- doPost delivery sync
+- separate BEFORE/AFTER photos
+- receipt upload
+- weekly target CSV import/update
+- date/store target lookup
+- multi-remarks in BEFORE
 
 DEPLOYMENT
-Replace the existing Apps Script code, Save, then Manage deployments > Edit existing Web App >
-New version > Deploy. Keep the same /exec URL.
-Replace GitHub index.html and sw.js, then reload/update the PWA.
+Frontend:
+Replace the current deployed index.html/sw.js with v36.
 
-CACHE: tropikind-camera-v31
-
-- v32: Added Marlon and NepNep to Delivery Staff list; staff list remains alphabetical.
-- Cache: tropikind-camera-v32.
+Apps Script:
+If already using the v33/v35 backend, no backend logic change is required for this UI revision.
+If not, use the included Tropikind_Delivery_Final.gs and deploy a New Version under the SAME Web App deployment so the /exec URL stays unchanged.
